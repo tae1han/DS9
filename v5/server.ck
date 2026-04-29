@@ -11,8 +11,26 @@ true => int MONITOR_USER_INPUT;
 8888 => int CLIENT_OSC_PORT;
 8889 => int SERVER_STATUS_PORT;
 
-["localhost"] @=> string CLIENT_IPS[]; // debug
-// ["cheese.local", "dumpling.local", "eggroll.local", ...] @=> string CLIENT_IPS[];
+// chuck server.ck:midiDevice:client1:client2:...
+// e.g. chuck server.ck:2:dumpling.local:eggroll.local
+if(me.args() < 1)
+{
+    <<< "usage: chuck server.ck:<midiDevice>[:<clientIP> ...]" >>>;
+    me.exit();
+}
+
+me.arg(0) => Std.atoi => MIDI_DEVICE;
+
+string CLIENT_IPS[0];
+if(me.args() > 1)
+{
+    for(1 => int i; i < me.args(); i++)
+        CLIENT_IPS << me.arg(i);
+}
+else
+{
+    CLIENT_IPS << "localhost";
+}
 
 // Buffer state
 bufferState bs;
