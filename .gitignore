@@ -2,3 +2,15 @@ data/
 *.zip
 imgui.ini
 .DS_Store
+
+# old versions and loose files
+v1/
+v2/
+v3/
+SMIR.ck
+agent.ck
+listener.ck
+midiPlayer.ck
+test.ck
+tests/
+instruments/
