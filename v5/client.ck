@@ -72,9 +72,10 @@ else if(agentName == "parakeet")
 {
     ezFluidInst inst("./data/TimGM6mb.sf2", 24);
     inst.gain(12);
-    inst => LPF lpf_p => NRev rev_p => master;
-    lpf_p.freq(3000);
-    rev_p.mix(0.075);
+    // inst => LPF lpf_p => NRev rev_p => master;
+    // lpf_p.freq(3000);
+    // rev_p.mix(0.075);
+    inst => master;
     Parakeet agent;
     obs @=> agent.source;
     inst @=> agent.inst;
