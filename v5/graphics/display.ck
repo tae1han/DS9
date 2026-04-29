@@ -36,7 +36,8 @@ class AgentConsole extends GGen
     status[1].posX(0);
 
     GText body --> this;
-    "lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." => body.text;
+    // "lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." => body.text;
+    "" => body.text;
     body.font("chugl:proggy-clean");
     body.color(@(1, 1, 1));
     body.size(.2);
