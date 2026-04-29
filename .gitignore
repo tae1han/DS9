@@ -1,8 +1,7 @@
-data/
 *.zip
 imgui.ini
 .DS_Store
-
+*.wav
 # old versions and loose files
 v1/
 v2/
