@@ -1,0 +1,4 @@
+data/
+*.zip
+imgui.ini
+.DS_Store
