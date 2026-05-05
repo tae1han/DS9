@@ -27,6 +27,18 @@ public class Falcon extends Agent
         60.0 => localBpm;
     }
 
+    fun void setParam(string param, float val)
+    {
+        if(param == "probability") val => activationProb;
+        else if(param == "numNotesMin") val $ int => numNotesMin;
+        else if(param == "numNotesMax") val $ int => numNotesMax;
+        else if(param == "stepMsMin") val => stepMsMin;
+        else if(param == "stepMsMax") val => stepMsMax;
+        else if(param == "delayMin") val => responseDelayMin;
+        else if(param == "delayMax") val => responseDelayMax;
+        else if(param == "enabled") { if(val > 0) enable(); else disable(); }
+    }
+
     fun int shouldActivate()
     {
         if(source == null || inst == null) return 0;

@@ -26,6 +26,20 @@ public class Albatross extends Agent
         spork ~ playbackWorker();
     }
 
+    fun void setParam(string param, float val)
+    {
+        if(param == "minNotes") val $ int => minNotes;
+        else if(param == "minPitchClasses") val $ int => minPitchClasses;
+        else if(param == "holdSecondsMin") val => holdSecondsMin;
+        else if(param == "holdSecondsMax") val => holdSecondsMax;
+        else if(param == "maxVoices") val $ int => maxVoices;
+        else if(param == "velMin") val => velMin;
+        else if(param == "velMax") val => velMax;
+        else if(param == "delayMin") val => responseDelayMin;
+        else if(param == "delayMax") val => responseDelayMax;
+        else if(param == "enabled") { if(val > 0) enable(); else disable(); }
+    }
+
     fun int shouldActivate()
     {
         if(source == null) return 0;

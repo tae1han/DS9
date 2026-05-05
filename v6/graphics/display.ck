@@ -86,6 +86,7 @@ public class Waveform extends GGen
 {
     1024 => int WINDOW_SIZE;
     1 => float x_width;
+    1 => int useLocalAudio;
 
     GLines lines --> this;
     lines.width(.01);
@@ -131,6 +132,7 @@ public class Waveform extends GGen
         while(true)
         {
             GG.nextFrame() => now;
+            if(!useLocalAudio) continue;
             map2waveform(samples, positions);
             lines.positions(positions);
         }
@@ -140,6 +142,26 @@ public class Waveform extends GGen
     fun void setColor(vec3 color)
     {
         color => lines.color;
+    }
+
+    fun void setUseLocalAudio(int v)
+    {
+        v => useLocalAudio;
+    }
+
+    fun void setRemoteY(float ys[])
+    {
+        vec2 p[0];
+        ys.size() => int n;
+        if(n < 2) return;
+        for(int i; i < n; i++)
+        {
+            vec2 q;
+            -x_width/2 + x_width * i / (n - 1) => q.x;
+            ys[i] => q.y;
+            p << q;
+        }
+        lines.positions(p);
     }
 }
 
@@ -164,12 +186,11 @@ public class DisplayConsole extends GGen
     AgentConsole agent_consoles[num_agents];
     [-3.0, 0.0, 3.0, -3.0, 0.0, 3.0] @=> float x_positions[];
     [1.5, 1.5, 1.5, -1.5, -1.5, -1.5] @=> float y_positions[];
-    ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon"] @=> string nicknames[];
     [Color.RED, Color.GREEN, Color.CYAN, Color.BLUE, Color.YELLOW, Color.MAGENTA] @=> vec3 agent_colors[];
     for(int i; i < num_agents; i++)
     {
         @(x_positions[i], y_positions[i], 0) => vec3 center_pos;
-        nicknames[i] => agent_consoles[i].setName;
+        "Agent" => agent_consoles[i].setName;
         agent_colors[i] => agent_consoles[i].nickname.color;
         agent_consoles[i].pos(center_pos);
         waveforms[i] --> this;
@@ -185,6 +206,31 @@ public class DisplayConsole extends GGen
     fun void setBody(int agent_index, string body)
     {
         agent_consoles[agent_index].setBody(body);
+    }
+
+    fun void setName(int agent_index, string name)
+    {
+        name => agent_consoles[agent_index].setName;
+    }
+
+    fun void setColor(int agent_index, vec3 color)
+    {
+        color => agent_consoles[agent_index].nickname.color;
+        color => waveforms[agent_index].setColor;
+    }
+
+    fun void setVisible(int agent_index, int visible)
+    {
+        if(visible)
+        {
+            agent_consoles[agent_index].sca(1.0);
+            waveforms[agent_index].sca(1.0);
+        }
+        else
+        {
+            agent_consoles[agent_index].sca(0.0001);
+            waveforms[agent_index].sca(0.0001);
+        }
     }
 }
 
@@ -228,5 +274,26 @@ public class ClientDisplay extends GGen
     fun void setBody(string body)
     {
         console.setBody(body);
+    }
+
+    fun void setRole(int agentIndex)
+    {
+        nicknames[agentIndex] => console.setName;
+        agent_colors[agentIndex] => console.nickname.color;
+        agent_colors[agentIndex] => waveform.setColor;
+    }
+
+    fun void setVisible(int visible)
+    {
+        if(visible)
+        {
+            console.sca(2.0);
+            waveform.sca(2.0);
+        }
+        else
+        {
+            console.sca(0.0001);
+            waveform.sca(0.0001);
+        }
     }
 }

@@ -20,7 +20,7 @@ bs.device(MIDI_DEVICE);
 
 // Instruments (gains match client.ck)
 modalBarInst parrotInst(6);      parrotInst.gain(2.5);
-ezFluidInst parakeetInst("./data/TimGM6mb.sf2", 24);  parakeetInst.gain(12);
+ezFluidInst parakeetInst("./data/TimGM6mb.sf2", 24);  parakeetInst.gain(8);
 krstlchrInst albatrossInst;      albatrossInst.gain(0.5);
 frenchrnInst peacockInst;        peacockInst.gain(.8);
 synthBassInst emuInst;           emuInst.gain(.9);

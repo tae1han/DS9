@@ -16,6 +16,14 @@ public class Peacock extends Agent
         spork ~ playbackWorker();
     }
 
+    fun void setParam(string param, float val)
+    {
+        if(param == "inversionProb") val => inversionProb;
+        else if(param == "delayMin") val => responseDelayMin;
+        else if(param == "delayMax") val => responseDelayMax;
+        else if(param == "enabled") { if(val > 0) enable(); else disable(); }
+    }
+
     fun int shouldActivate()
     {
         if(source == null) return 0;

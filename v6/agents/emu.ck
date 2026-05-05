@@ -25,6 +25,16 @@ public class Emu extends Agent
         spork ~ playbackWorker();
     }
 
+    fun void setParam(string param, float val)
+    {
+        if(param == "transposeSemis") val $ int => transposeSemis;
+        else if(param == "loopPlayback") val $ int => loopPlayback;
+        else if(param == "gateInterval") val => gateInterval;
+        else if(param == "delayMin") val => responseDelayMin;
+        else if(param == "delayMax") val => responseDelayMax;
+        else if(param == "enabled") { if(val > 0) enable(); else disable(); }
+    }
+
     fun int shouldActivate()
     {
         if(source == null) return 0;
