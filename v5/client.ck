@@ -7,19 +7,16 @@
 // Config
 8888 => int OSC_LISTEN_PORT;
 8889 => int SERVER_STATUS_PORT;
-"169.254.108.239" => string SERVER_IP;
+"224.0.0.1" => string MULTICAST_ADDR;
 
-// COmmand line setup
-// ------------------------------------------------------------
-// chuck client.ck:agentName[:serverIP]
+// chuck client.ck:<agentName>
 if(me.args() < 1)
 {
-    <<< "CLIENT-SIDE COMMAND: chuck client.ck:<agent name>:<serverIP>" >>>;
+    <<< "usage: chuck client.ck:<agent name>" >>>;
     me.exit();
 }
 
 me.arg(0) => string agentName;
-if(me.args() > 1) me.arg(1) => SERVER_IP;
 
 ["parrot", "parakeet", "albatross", "peacock", "emu", "falcon"] @=> string agentNames[];
 
@@ -128,11 +125,11 @@ spork ~ obs.oscListen();
 spork ~ obs.rollingReaper();
 theAgent.run();
 
-<<< "client running:", agentName, "server:", SERVER_IP >>>;
+<<< "client running:", agentName, "multicast:", MULTICAST_ADDR >>>;
 
-// report status back to server
+// report status back to server via multicast
 OscOut statusOut;
-statusOut.dest(SERVER_IP, SERVER_STATUS_PORT);
+statusOut.dest(MULTICAST_ADDR, SERVER_STATUS_PORT);
 
 fun void _reportStatus()
 {

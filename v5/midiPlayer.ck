@@ -26,6 +26,16 @@ public class midiPlayer {
         <<< "MIDI device:", min.num(), " -> ", min.name() >>>;
     }
 
+    fun void device(string name) {
+        if (!min.open(name))
+        {
+            <<< "midiPlayer: failed to open MIDI device", name >>>;
+            me.exit();
+        }
+        min.num() => _device;
+        <<< "MIDI device:", min.num(), " -> ", min.name() >>>;
+    }
+
     fun void logOutput(int toggle) { toggle => _logOutput; }
     fun void setInstrument(ezInstrument i) {
         i @=> inst;

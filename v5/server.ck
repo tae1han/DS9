@@ -1,36 +1,19 @@
 @import {"smuck", "smuck/ezFluidInst.ck"}
-@import {"bufferState.ck", "oscBroadcaster.ck", "midiPlayer.ck"}
+@import {"bufferState.ck", "midiPlayer.ck"}
 @import {"graphics/display.ck"}
 
 // Config
-2 => int MIDI_DEVICE;
+"USB Midi Cable" => string MIDI_DEVICE;
 true => int MONITOR_USER_INPUT;
 .75 => float SILENCE_THRESHOLD_SEC;
 5.0 => float ROLLING_WINDOW_SEC;
 
+"224.0.0.1" => string MULTICAST_ADDR;
 8888 => int CLIENT_OSC_PORT;
 8889 => int SERVER_STATUS_PORT;
 
-// chuck server.ck:midiDevice:client1:client2:...
-// e.g. chuck server.ck:2:dumpling.local:eggroll.local
-if(me.args() < 1)
-{
-    <<< "usage: chuck server.ck:<midiDevice>[:<clientIP> ...]" >>>;
-    me.exit();
-}
-
-me.arg(0) => Std.atoi => MIDI_DEVICE;
-
-string CLIENT_IPS[0];
-if(me.args() > 1)
-{
-    for(1 => int i; i < me.args(); i++)
-        CLIENT_IPS << me.arg(i);
-}
-else
-{
-    CLIENT_IPS << "localhost";
-}
+// chuck server.ck[:midiDeviceName]
+if(me.args() > 0) me.arg(0) => MIDI_DEVICE;
 
 // Buffer state
 bufferState bs;
@@ -38,22 +21,21 @@ SILENCE_THRESHOLD_SEC => bs.silenceThreshold;
 ROLLING_WINDOW_SEC => bs.rollingWindow;
 bs.device(MIDI_DEVICE);
 
-// OSC
-oscBroadcaster broadcaster;
-for(int i; i < CLIENT_IPS.size(); i++)
-{
-    broadcaster.addClient(CLIENT_IPS[i], CLIENT_OSC_PORT);
-}
+// OSC multicast
+OscOut xmit;
+xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT);
 
-// forward bufferState events to OSC
+// forward bufferState events to OSC multicast
 fun void _forwardNoteOn()
 {
     while(true)
     {
         bs.noteReceivedEvent => now;
         bs._lastNote @=> ezNote n;
-        // <<< "fwd noteOn:", n.pitch(), n.velocity() >>>;
-        broadcaster.noteOn(n.pitch() $ int, n.velocity());
+        xmit.start("/ds9/noteOn");
+        n.pitch() $ int => xmit.add;
+        n.velocity() => xmit.add;
+        xmit.send();
     }
 }
 
@@ -62,8 +44,9 @@ fun void _forwardNoteOff()
     while(true)
     {
         bs.noteOffEvent => now;
-        // <<< "fwd noteOff:", bs._lastNoteOffPitch >>>;
-        broadcaster.noteOff(bs._lastNoteOffPitch);
+        xmit.start("/ds9/noteOff");
+        bs._lastNoteOffPitch => xmit.add;
+        xmit.send();
     }
 }
 
@@ -72,8 +55,8 @@ fun void _forwardPhraseStart()
     while(true)
     {
         bs.phraseStartEvent => now;
-        // <<< "fwd phraseStart" >>>;
-        broadcaster.phraseStart();
+        xmit.start("/ds9/phraseStart");
+        xmit.send();
     }
 }
 
@@ -82,8 +65,8 @@ fun void _forwardPhraseComplete()
     while(true)
     {
         bs.phraseCompleteEvent => now;
-        // <<< "fwd phraseComplete, notes:", bs.completedPhrase.notes().size() >>>;
-        broadcaster.phraseComplete();
+        xmit.start("/ds9/phraseComplete");
+        xmit.send();
     }
 }
 
@@ -92,7 +75,9 @@ fun void _forwardSilence()
     while(true)
     {
         bs.silenceSustainedEvent => now;
-        broadcaster.silenceSustained(bs.silenceSeconds());
+        xmit.start("/ds9/silenceSustained");
+        bs.silenceSeconds() => xmit.add;
+        xmit.send();
     }
 }
 
@@ -113,7 +98,8 @@ if(MONITOR_USER_INPUT)
     ezFluidInst monitorInst("./data/TimGM6mb.sf2");
     monitorInst.gain(10);
     monitorInst => master;
-    midiPlayer monitor(MIDI_DEVICE);
+    midiPlayer monitor;
+    monitor.device(MIDI_DEVICE);
     monitor.setInstrument(monitorInst);
 }
 
@@ -129,7 +115,7 @@ spork ~ _forwardPhraseStart();
 spork ~ _forwardPhraseComplete();
 spork ~ _forwardSilence();
 
-<<< "server running. clients:", CLIENT_IPS.size(), "port:", CLIENT_OSC_PORT >>>;
+<<< "server running. multicast:", MULTICAST_ADDR, "port:", CLIENT_OSC_PORT >>>;
 
 // Display
 // ------------------------------------------------------------

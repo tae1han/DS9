@@ -1,0 +1,25 @@
+#!/bin/bash
+# Usage: ds9-client <station-number>
+# Stations: 1=parrot, 2=parakeet, 3=albatross, 4=peacock, 5=emu, 6=falcon
+
+if test $# -ne 1; then
+    echo "usage: $0 <station-number 1-6>"
+    exit 1
+fi
+
+AGENTS=(parrot parakeet albatross peacock emu falcon)
+IDX=$(($1 - 1))
+
+if [ $IDX -lt 0 ] || [ $IDX -gt 5 ]; then
+    echo "station must be 1-6"
+    exit 1
+fi
+
+AGENT=${AGENTS[$IDX]}
+system-sound-to-motu
+osascript -e "set Volume 6"
+echo "Starting DS9 client: station $1 -> $AGENT"
+
+pushd /Users/slork/slork/users/tae1han/ds9/
+chuck -c6 client.ck:$AGENT
+popd

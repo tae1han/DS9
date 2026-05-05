@@ -65,6 +65,17 @@ public class bufferState
         <<< "bufferState MIDI device:", min.num(), "->", min.name() >>>;
     }
 
+    fun void device(string name)
+    {
+        if (!min.open(name))
+        {
+            <<< "bufferState: failed to open MIDI device", name >>>;
+            me.exit();
+        }
+        min.num() => _device;
+        <<< "bufferState MIDI device:", min.num(), "->", min.name() >>>;
+    }
+
     fun float silenceSeconds() { return (now - _lastNoteTime) / second; }
     fun int inPhrase() { return _inPhrase; }
 

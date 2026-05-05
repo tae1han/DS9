@@ -1,0 +1,8 @@
+#!/bin/bash
+# Usage: ds9-server [midi-device-name]
+MIDI_DEV=${1:-"USB Midi Cable"}
+system-sound-to-motu
+osascript -e "set Volume 6"
+pushd /Users/slork/slork/users/tae1han/ds9/
+chuck -c6 server.ck:"$MIDI_DEV"
+popd
