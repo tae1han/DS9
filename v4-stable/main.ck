@@ -6,7 +6,7 @@
 
 // Config
 2 => int MIDI_DEVICE;
-true => int MONITOR_USER_INPUT;
+false => int MONITOR_USER_INPUT;
 .75 => float SILENCE_THRESHOLD_SEC;
 5.0 => float ROLLING_WINDOW_SEC;
 
@@ -47,7 +47,7 @@ master.gain(.8);
 lpf.freq(7000);
 comp.limit();
 rev.mix(0.1);
-master.gain(0.8);
+master.gain(1.2);
 for(int i; i < dac.channels(); i++)
 {
     rev => dac.chan(i);
