@@ -5,10 +5,12 @@
 @import {"graphics/display.ck"}
 
 // Config
-2 => int MIDI_DEVICE;
+"USB Midi Cable" => string MIDI_DEVICE;
 true => int MONITOR_USER_INPUT;
 .75 => float SILENCE_THRESHOLD_SEC;
 5.0 => float ROLLING_WINDOW_SEC;
+
+if(me.args() > 0) me.arg(0) => MIDI_DEVICE;
 
 bufferState bs;
 SILENCE_THRESHOLD_SEC => bs.silenceThreshold;
@@ -16,51 +18,33 @@ ROLLING_WINDOW_SEC => bs.rollingWindow;
 bs.device(MIDI_DEVICE);
 
 
-// Instruments
-modalBarInst parrotInst(6);      parrotInst.gain(1.5);
+// Instruments (gains match client.ck)
+modalBarInst parrotInst(6);      parrotInst.gain(2.5);
 ezFluidInst parakeetInst("./data/TimGM6mb.sf2", 24);  parakeetInst.gain(12);
-// modalBarInst parakeetInst(1);  parakeetInst.gain(1.5);
 krstlchrInst albatrossInst;      albatrossInst.gain(0.5);
 frenchrnInst peacockInst;        peacockInst.gain(.8);
-synthBassInst emuInst;           emuInst.gain(.6);
+synthBassInst emuInst;           emuInst.gain(.9);
 arpInst falconInst;              falconInst.gain(.5);
 
-
-chout <= "Instrument channel count: " <= IO.newline();
-chout <= "parrotInst: " <= parrotInst.channels() <= IO.newline();
-chout <= "parakeetInst: " <= parakeetInst.channels() <= IO.newline();
-chout <= "albatrossInst: " <= albatrossInst.channels() <= IO.newline();
-chout <= "peacockInst: " <= peacockInst.channels() <= IO.newline();
-chout <= "emuInst: " <= emuInst.channels() <= IO.newline();
-chout <= "falconInst: " <= falconInst.channels() <= IO.newline();
-// monitorInst options
-// modalBarInst monitorInst(4);  monitorInst.gain(1.2);
-// krstlchrInst monitorInst;
-// frenchrnInst monitorInst;
 ezFluidInst monitorInst("./data/TimGM6mb.sf2");
-// monitorInst.progChange(72);
 monitorInst.gain(10);
 
-// Master chain
+// Master chain (matches client.ck: all instruments direct to master)
 Gain master => LPF lpf => Dyno comp => NRev rev;
 master.gain(.8);
 lpf.freq(7000);
 comp.limit();
 rev.mix(0.1);
-master.gain(0.8);
 for(int i; i < dac.channels(); i++)
 {
     rev => dac.chan(i);
 }
-// <<< "master chain ready" >>>;
 
 parrotInst    => master;
-parakeetInst  => LPF lpf_parakeet => NRev rev_parakeet => master;
-lpf_parakeet.freq(3000);
-rev_parakeet.mix(0.075);
+parakeetInst  => master;
 albatrossInst => master;
 peacockInst   => master;
-// emuInst       => master;
+emuInst       => master;
 falconInst    => master;
 
 if(MONITOR_USER_INPUT) monitorInst => master;
@@ -75,9 +59,9 @@ Falcon falcon;       bs @=> falcon.source;    falconInst @=> falcon.inst;
 
 if(MONITOR_USER_INPUT)
 {
-    midiPlayer monitor(MIDI_DEVICE);
+    midiPlayer monitor;
+    monitor.device(MIDI_DEVICE);
     monitor.setInstrument(monitorInst);
-    // <<< "monitor active on device", MIDI_DEVICE >>>;
 }
 
 // Run
@@ -117,32 +101,12 @@ GG.camera().orthographic();
 GG.bloom(true);
 GG.bloomPass().intensity(0.2);
 
-// fun void graphicsLoop()
-// {
-//     while(true)
-//     {
-//         for(int i; i < agents.size(); i++)
-//         {
-//             display.setStatus(i, agents[i].displayStatus);
-//             display.setBody(i, agents[i].displayBody);
-//         }
-//         GG.nextFrame() => now;
-//     }
-// }
-
-// spork ~ graphicsLoop();
-
-// while(true)
-// {
-//     samp => now;
-// }
-
-    while(true)
+while(true)
+{
+    for(int i; i < agents.size(); i++)
     {
-        for(int i; i < agents.size(); i++)
-        {
-            display.setStatus(i, agents[i].displayStatus);
-            display.setBody(i, agents[i].displayBody);
-        }
-        GG.nextFrame() => now;
+        display.setStatus(i, agents[i].displayStatus);
+        display.setBody(i, agents[i].displayBody);
     }
+    GG.nextFrame() => now;
+}
