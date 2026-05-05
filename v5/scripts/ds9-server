@@ -13,8 +13,8 @@ cleanup() {
 trap cleanup SIGINT
 
 # set dac and volume
-# system-sound-to-motu
-# osascript -e "set Volume 4"
+system-sound-to-motu
+osascript -e "set Volume 4"
 
 # run server script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
