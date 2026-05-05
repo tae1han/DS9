@@ -1,7 +1,8 @@
 #!/bin/bash
-# Usage: ds9-client <station-number>
+# how to use: ds9-client <station-number>
 # Stations: 1=parrot, 2=parakeet, 3=albatross, 4=peacock, 5=emu, 6=falcon
 
+# set station number
 if test $# -ne 1; then
     echo "usage: $0 <station-number 1-6>"
     exit 1
@@ -17,8 +18,10 @@ fi
 
 AGENT=${AGENTS[$IDX]}
 
+# turn wifi off
 networksetup -setairportpower en0 off
-system-sound-to-motu
+# set dac and volume
+# system-sound-to-motu
 osascript -e "set Volume 4"
 
 cleanup() {
@@ -28,6 +31,7 @@ cleanup() {
 }
 trap cleanup SIGINT
 
+# run client script
 echo "Starting DS9 client: station $1 -> $AGENT"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -35,4 +39,5 @@ pushd "$SCRIPT_DIR/.."
 chuck -c6 client.ck:$AGENT
 popd
 
+# turn wifi back on
 networksetup -setairportpower en0 on

@@ -1,11 +1,10 @@
 #!/bin/bash
-# Usage: ds9-server [midi-device-name]
+# how to use: ds9-server [midi-device-name]
+# set midi device
 MIDI_DEV=${1:-"USB Midi Cable"}
 
+# turn wifi off
 networksetup -setairportpower en0 off
-system-sound-to-motu
-osascript -e "set Volume 4"
-
 cleanup() {
     echo -e "\nShutting down..."
     networksetup -setairportpower en0 on
@@ -13,9 +12,15 @@ cleanup() {
 }
 trap cleanup SIGINT
 
+# set dac and volume
+# system-sound-to-motu
+# osascript -e "set Volume 4"
+
+# run server script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 pushd "$SCRIPT_DIR/.."
 chuck -c6 server.ck:"$MIDI_DEV"
 popd
 
+# turn wifi back on
 networksetup -setairportpower en0 on
