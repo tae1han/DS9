@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+networksetup -setairportpower en0 off
+osascript -e "set Volume 5"
+
+# 1. Define the command or function to run on Ctrl+C
+cleanup() {
+    echo -e "\nCtrl+C detected! Performing cleanup..."
+    networksetup -setairportpower en0 on
+    exit 1
+}
+
+# 2. Register the trap for the SIGINT (Ctrl+C) signal
+trap cleanup SIGINT

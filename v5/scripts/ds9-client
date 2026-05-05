@@ -16,10 +16,23 @@ if [ $IDX -lt 0 ] || [ $IDX -gt 5 ]; then
 fi
 
 AGENT=${AGENTS[$IDX]}
+
+networksetup -setairportpower en0 off
 system-sound-to-motu
-osascript -e "set Volume 6"
+osascript -e "set Volume 4"
+
+cleanup() {
+    echo -e "\nShutting down..."
+    networksetup -setairportpower en0 on
+    exit 0
+}
+trap cleanup SIGINT
+
 echo "Starting DS9 client: station $1 -> $AGENT"
 
-pushd /Users/slork/slork/users/tae1han/ds9/
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+pushd "$SCRIPT_DIR/.."
 chuck -c6 client.ck:$AGENT
 popd
+
+networksetup -setairportpower en0 on

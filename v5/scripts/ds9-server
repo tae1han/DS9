@@ -1,8 +1,21 @@
 #!/bin/bash
 # Usage: ds9-server [midi-device-name]
 MIDI_DEV=${1:-"USB Midi Cable"}
+
+networksetup -setairportpower en0 off
 system-sound-to-motu
-osascript -e "set Volume 6"
-pushd /Users/slork/slork/users/tae1han/ds9/
+osascript -e "set Volume 4"
+
+cleanup() {
+    echo -e "\nShutting down..."
+    networksetup -setairportpower en0 on
+    exit 0
+}
+trap cleanup SIGINT
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+pushd "$SCRIPT_DIR/.."
 chuck -c6 server.ck:"$MIDI_DEV"
 popd
+
+networksetup -setairportpower en0 on
