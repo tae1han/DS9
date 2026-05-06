@@ -3,6 +3,16 @@
 # set midi device
 MIDI_DEV=${1:-"USB Midi Cable"}
 
+# Resolve symlinks so this works when invoked via PATH symlink.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # turn wifi off
 networksetup -setairportpower en0 off
 cleanup() {
@@ -17,8 +27,13 @@ system-sound-to-motu
 osascript -e "set Volume 4"
 
 # run server script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-pushd "$SCRIPT_DIR/.."
+if [ ! -f "$PROJECT_DIR/server.ck" ] || [ ! -f "$PROJECT_DIR/agent.ck" ]; then
+    echo "Error: expected DS9 v6 files not found in $PROJECT_DIR"
+    echo "Make sure this script is inside DS9/v6/scripts (or symlinked to it)."
+    exit 1
+fi
+
+pushd "$PROJECT_DIR" >/dev/null || exit 1
 chuck -c6 server.ck:"$MIDI_DEV"
 popd
 

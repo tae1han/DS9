@@ -6,10 +6,6 @@ imgui.ini
 v1/
 v2/
 v3/
-SMIR.ck
-agent.ck
-listener.ck
-midiPlayer.ck
 test.ck
 tests/
 instruments/
