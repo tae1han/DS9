@@ -42,13 +42,6 @@ cleanup() {
 trap cleanup SIGINT
 
 # run client script
-echo "Starting DS9 client: station $1 -> $AGENT"
-if [ ! -f "$PROJECT_DIR/client.ck" ] || [ ! -f "$PROJECT_DIR/agent.ck" ]; then
-    echo "Error: expected DS9 v6 files not found in $PROJECT_DIR"
-    echo "Make sure this script is inside DS9/v6/scripts (or symlinked to it)."
-    exit 1
-fi
-
 pushd "$PROJECT_DIR" >/dev/null || exit 1
 chuck -c6 client.ck:$AGENT --bufsize:1024
 popd

@@ -27,12 +27,6 @@ system-sound-to-motu
 osascript -e "set Volume 4"
 
 # run server script
-if [ ! -f "$PROJECT_DIR/server.ck" ] || [ ! -f "$PROJECT_DIR/agent.ck" ]; then
-    echo "Error: expected DS9 v6 files not found in $PROJECT_DIR"
-    echo "Make sure this script is inside DS9/v6/scripts (or symlinked to it)."
-    exit 1
-fi
-
 pushd "$PROJECT_DIR" >/dev/null || exit 1
 chuck -c6 server.ck:"$MIDI_DEV"
 popd
