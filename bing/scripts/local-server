@@ -1,0 +1,45 @@
+#!/bin/bash
+# DS9 v8 server — human MIDI at center, display + cue broadcast
+# Usage: local-server [cues] [local]
+#        MIDI device name is set in MIDI_DEV below (always passed to ChucK)
+
+MIDI_DEV="USB Midi Cable"
+CHUCK_EXTRA=""
+
+for arg in "$@"; do
+    if [ "$arg" = "cues" ]; then
+        CHUCK_EXTRA="${CHUCK_EXTRA}:cues"
+    elif [ "$arg" = "local" ]; then
+        CHUCK_EXTRA=":local${CHUCK_EXTRA}"
+    else
+        echo "unknown arg: $arg (use cues and/or local)"
+        exit 1
+    fi
+done
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+networksetup -setairportpower en0 off 2>/dev/null || true
+cleanup() {
+    echo -e "\nShutting down..."
+    networksetup -setairportpower en0 on 2>/dev/null || true
+    exit 0
+}
+trap cleanup SIGINT
+
+command -v system-sound-to-motu >/dev/null && system-sound-to-motu
+osascript -e "set Volume 4" 2>/dev/null || true
+
+pushd "$PROJECT_DIR" >/dev/null || exit 1
+echo "MIDI device: $MIDI_DEV"
+chuck -c6 server.ck:"$MIDI_DEV"$CHUCK_EXTRA
+popd
+
+networksetup -setairportpower en0 on 2>/dev/null || true

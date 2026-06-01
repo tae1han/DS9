@@ -1,0 +1,184 @@
+# Pre-chaos established defaults (source of truth for roleBaselines.ck).
+# After chaos/mute, resetBaseline restores these values.
+# Performance overrides (conductorScenes.ck): Owl echo postSeedQuiet 0.5–1.0 s;
+# M3 parakeet harmonize (rtMode 1, listen to Owl).
+# Gains: roleGains.ck — performance vs lower chaos* (parakeet was loudest at 4.0×).
+
+Parrot (role 0) — SF2 pool, timbre 0 = xylophone.sf2
+Param	Default	Notes
+mode
+0 echo / 1 develop
+m1 forces 0
+minNotes
+2
+Needs ≥2 notes in completed phrase
+delayMin / Max
+0.05 / 0.75 s
+Wait before playback
+probability
+1.0
+Always plays when triggered
+repeatsMin / Max
+1 / 1
+One pass
+rhythmScale
+1.0
+octaveDisplaceProb
+0
+developTechnique
+-1
+Random if mode = 1
+Triggers: phrase end (human) or upstream agent phrase. Echoes/develops completed phrase.
+
+Parakeet (role 1) — harp.sf2 only (forced timbre 0)
+Param	Default	m1 override
+rtMode
+1 harmonize
+0 mirror
+activationProb
+0.25
+Only ~25% of notes open a harmony window
+windowDurMin / Max
+1 / 5 s
+Harmony window length
+silenceMin / Max
+3 / 8 s
+Between windows
+intervalMin / Max
+3 / 9 semitones
+Set in constructor (not 100/0)
+polyphony
+2
+Up to 2 harmony voices
+harmonyDirection
+1
+Above melody
+harmonyVelScale
+0.95
+minInputVel
+0.15
+Ignore very soft keys
+Triggers: real-time on each note (onNote), not phrase end. Client gain 1.2×.
+
+Albatross (role 2) — custom synth (not SF2)
+Param	Default
+minNotes
+4 (in phrase)
+minPitchClasses
+4 distinct PCs
+holdSecondsMin / Max
+2 / 4 s
+maxVoices
+2 drones
+velMin / Max
+0.15 / 0.35
+trillProb
+0.28
+trillRateMinHz / MaxHz
+4.5 / 16
+trillRampProb
+0.6
+responseDelayMin / Max
+0.5 / 5 s
+cancelOnNewPhrase
+1
+Triggers: phrase end → pitch-set drones (glide up or trill). Synth ADSR sustain 0.1, decay 3.6 s.
+
+Peacock (role 3) — timbre 0 = nylon_end.sf2
+Param	Default
+minPitchClasses
+2 in rolling/completed material
+pitchLow / High
+36 / 96
+activationProb
+0.5
+timingScale
+1.5
+responseDelay
+0
+Triggers: phrase end → 1–4 rolled chords from pitch set. Gain 0.85× client (hot SF2).
+
+Emu (role 4) — horn.sf2 or glideBass synth when glideMode = 1
+Param	Default	m1
+glideMode
+0 bassline
+0
+minNotes
+1
+transposeSemis
+-12
+Octave down
+gateInterval
+7 s
+Bottom-voice polling
+legatoize
+1
+glideProb
+0.45
+Only when glide mode / auto-switch
+autoModeSwitch
+0
+responseDelayMin / Max
+0.2 / 0.6 s
+Triggers: phrase end → minimal bass from lowest voice. Many glide-* params apply when glideMode or auto-switch is on.
+
+Falcon (role 5) — timbre 0 = epiano.sf2
+Param	Default
+minRollingNotes
+2 in rolling buffer
+numNotesMin / Max
+8 / 24
+stepMsMin / Max
+40 / 180
+noteDurMs
+400
+velMin / Max
+0.45 / 0.82
+activationProb
+0.5
+reversalProb
+0.05
+lowMidi / highMidi
+48 / 96
+cancelOnNewPhrase
+1
+Triggers: phrase end → scale run from pitch set. Gain 1.6×.
+
+Swan (role 6) — flute.sf2
+Param	Default
+minOrdered
+3 pitches in set
+pitchLow / High
+36 / 96
+rootVel / harmonyVel
+0.72 / 0.58
+repeatExtraMin / Max
+0 / 3
+repeatSpeed
+0.5
+repeatGapBeats
+0.25
+timingScale
+0.3
+activationProb
+0.5
+responseDelay
+0
+Triggers: phrase end → ordered-set melody + dyads, optional repeats. Gain 3.5× client.
+
+Owl (role 7) — timbre 0 = bowed_glass.sf2
+Param	Default	m1
+owlMode
+0 echo / 1 seed
+0
+quantizeRecall
+0 off
+1 on
+seedProb
+0.5
+Only when owlMode = 1 + eddiesEnabled
+postSeedQuietMin / Max
+2 / 4 s
+After a seed
+responseDelay
+0

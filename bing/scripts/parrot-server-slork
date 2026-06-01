@@ -1,0 +1,44 @@
+#!/bin/bash
+# Run from /Users/slork/slork/scripts on center machine.
+# Usage:
+#   ./parrot-server-slork
+#   ./parrot-server-slork "USB Midi Cable"
+#   ./parrot-server-slork "USB Midi Cable" 1
+
+set -euo pipefail
+
+PROJECT_DIR="/Users/slork/slork/users/tae1han/pandemonium_v2"
+
+MIDI_DEV="USB Midi Cable"
+GT_DEVICE=""
+for arg in "$@"; do
+  if [[ "$arg" =~ ^[0-9]+$ ]]; then
+    GT_DEVICE="$arg"
+  else
+    MIDI_DEV="$arg"
+  fi
+done
+
+if ! command -v chuck >/dev/null 2>&1; then
+  echo "chuck not found in PATH" >&2
+  exit 1
+fi
+
+cd "$PROJECT_DIR"
+
+echo "Pandemonium cluster SERVER — $PROJECT_DIR"
+echo "  multicast OSC (LAN)"
+echo "  MIDI: $MIDI_DEV"
+echo ""
+
+chuck "autonomousFeeder.ck" >/dev/null 2>&1 &
+echo "  feeder    pid $!  (idle until GameTrak pedal 1)"
+
+GT_CK="gametrakConductor.ck"
+if [[ -n "$GT_DEVICE" ]]; then
+  GT_CK="${GT_CK}:${GT_DEVICE}"
+fi
+chuck "$GT_CK" >/dev/null 2>&1 &
+echo "  gametrak  pid $!"
+
+exec chuck -c6 "server.ck:${MIDI_DEV}:pad" --bufsize:1024

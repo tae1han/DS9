@@ -1,0 +1,17 @@
+#!/bin/bash
+# Autonomous feeder (idle until GameTrak pedal 1 starts chaos2).
+# Requires local-run + local-gametrak.
+#
+#   ./scripts/local-autonomous
+
+set -euo pipefail
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_DIR"
+exec chuck "autonomousFeeder.ck:local"

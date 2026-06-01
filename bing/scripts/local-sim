@@ -1,0 +1,4 @@
+#!/bin/bash
+# Alias for local-run (eight-station sim).
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+exec "$DIR/scripts/local-run" "$@"

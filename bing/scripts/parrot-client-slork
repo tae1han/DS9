@@ -1,0 +1,33 @@
+#!/bin/bash
+# Run from /Users/slork/slork/scripts on station laptops.
+# Usage:
+#   ./parrot-client-slork 1
+#   ./parrot-client-slork 4
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "usage: $0 <station-number 1-8>" >&2
+  echo "  Example: $0 3   -> client slot 2" >&2
+  exit 1
+fi
+
+STATION="$1"
+SLOT=$((STATION - 1))
+PROJECT_DIR="/Users/slork/slork/users/tae1han/pandemonium_v2"
+
+if [[ "$SLOT" -lt 0 || "$SLOT" -gt 7 ]]; then
+  echo "station must be 1-8" >&2
+  exit 1
+fi
+
+if ! command -v chuck >/dev/null 2>&1; then
+  echo "chuck not found in PATH" >&2
+  exit 1
+fi
+
+cd "$PROJECT_DIR"
+
+echo "Pandemonium cluster CLIENT — station $STATION (slot $SLOT)"
+
+exec chuck -c8 "client.ck:${SLOT}:pkmn:flash" --bufsize:1024

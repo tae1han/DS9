@@ -1,0 +1,16 @@
+#!/bin/bash
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+pkill -f "chuck.*$PROJECT_DIR/server.ck" 2>/dev/null || true
+pkill -f "chuck.*$PROJECT_DIR/client.ck" 2>/dev/null || true
+pkill -f "chuck.*$PROJECT_DIR/autonomousFeeder.ck" 2>/dev/null || true
+pkill -f "chuck.*$PROJECT_DIR/gametrakConductor.ck" 2>/dev/null || true
+pkill -f "chuck.*$PROJECT_DIR/studioConductor.ck" 2>/dev/null || true
+echo "Stopped local chuck processes under $PROJECT_DIR"
