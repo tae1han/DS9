@@ -19,6 +19,11 @@ public class RoleGains
 
     fun float chaos(int role)
     {
+        // Movement 1 (chaos): trim hot roles vs performance defaults.
+        if(role == 2) return performance(role) * 0.7;   // Albatross −30%
+        if(role == 3) return performance(role) * 0.85;  // Peacock −15%
+        if(role == 4) return performance(role) * 0.9;   // Emu −10%
+        if(role == 6) return performance(role) * 0.7;   // Swan −30%
         return performance(role);
     }
 
@@ -30,6 +35,7 @@ public class RoleGains
 
     fun void sendChaos(Conductor @ c, int slot, int role)
     {
-        sendPerformance(c, slot, role);
+        if(c == null) return;
+        c.sendParam(slot, "roleGain", chaos(role));
     }
 }

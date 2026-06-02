@@ -330,6 +330,7 @@ public class ConductorScenes
     {
         if(slot < 0 || slot >= _n) return;
         _c.sendRole(slot, 7);
+        60::ms => now;
         if(isSeed)
         {
             _owlSeedDefaults(slot);
@@ -340,10 +341,15 @@ public class ConductorScenes
             _owlDevelopDefaults(slot);
             _c.sendParam(slot, "owlMode", 0);
         }
+        _c.sendListenTarget(slot, -1);
+        40::ms => now;
+        _c.sendActivate(slot, 0);
+        80::ms => now;
+        _c.sendActivate(slot, 1);
+        40::ms => now;
         _owlMovementGain(slot);
     }
 
-    // owlB < 0 → only owlA (Low E toggle uses slot 7 only).
     fun void sendOwlToggleMode(int isSeed, int owlA, int owlB)
     {
         sendOwlToggleModeSlot(isSeed, owlA);

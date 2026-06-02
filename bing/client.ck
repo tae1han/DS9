@@ -12,6 +12,7 @@
 
 8 => int NUM_AGENT_SLOTS;
 4 => int ROLE_EMU;
+7 => int ROLE_OWL;
 
 9000 => int OSC_LISTEN_PORT_BASE;
 8889 => int SERVER_STATUS_PORT;
@@ -87,6 +88,14 @@ fun void _applyInstGain(int role, float g)
 fun float _roleGain(int role)
 {
     return roleGains.performance(role);
+}
+
+fun int _isOwlParam(string p)
+{
+    return p == "owlMode" || p == "eddiesEnabled" || p == "phraseOnlyEddies"
+        || p == "seedProb" || p == "quantizeRecall" || p == "seedCooldownMs"
+        || p == "postSeedQuietMin" || p == "postSeedQuietMax"
+        || p == "developTechnique" || p == "clearMemory";
 }
 
 parrot @=> agents[0]; parakeet @=> agents[1]; albatross @=> agents[2];
@@ -481,7 +490,8 @@ fun void _control()
                 else if(p == "roleGain")
                 {
                     int r;
-                    if(activeRole >= 0) activeRole => r;
+                    if(pendingRole == ROLE_OWL) ROLE_OWL => r;
+                    else if(activeRole >= 0) activeRole => r;
                     else if(pendingRole >= 0) pendingRole => r;
                     else myIndex => r;
                     _applyInstGain(r, v);
@@ -495,8 +505,10 @@ fun void _control()
                     roleBaselines.applyAgent(agents[r], r);
                     _applyInstGain(r, roleGains.performance(r));
                 }
+                else if(_isOwlParam(p))
+                    agents[ROLE_OWL].setParam(p, v);
                 else if(activeRole >= 0) agents[activeRole].setParam(p, v);
-                else agents[pendingRole].setParam(p, v);
+                else if(pendingRole >= 0) agents[pendingRole].setParam(p, v);
             }
         }
     }

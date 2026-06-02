@@ -37,6 +37,7 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
 0 => int _owlToggleIsSeed;
+time _owlToggleDebounceUntil;
 1 => int MOVEMENTS_VIA_STUDIO;
 for(0 => int i; i < me.args(); i++)
 {
@@ -306,7 +307,7 @@ fun void _controlMidiLoop()
                 on ? "on" : "off", "(no monitor noteOn)" >>>;
 
         if(pitch == 28 && on)
-            spork ~ _toggleOwlSlotsMode();
+            _toggleOwlSlotsMode();
         else if(on)
             _runMovement(pitch);
     }
@@ -363,14 +364,17 @@ fun void _midiDispatch()
 
 fun void _toggleOwlSlotsMode()
 {
+    if(now < _owlToggleDebounceUntil) return;
+    now + 0.3::second => _owlToggleDebounceUntil;
+
     if(_owlToggleIsSeed) 0 => _owlToggleIsSeed;
     else 1 => _owlToggleIsSeed;
 
-    scenes.sendOwlToggleMode(_owlToggleIsSeed, OWL_SLOT_A, -1);
+    scenes.sendOwlToggleMode(_owlToggleIsSeed, OWL_SLOT_A, OWL_SLOT_B);
     if(_owlToggleIsSeed)
-        <<< "owl toggle: slot", OWL_SLOT_A, "→ SEED" >>>;
+        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
     else
-        <<< "owl toggle: slot", OWL_SLOT_A, "→ DEVELOP" >>>;
+        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
 }
 
 fun void _serverLinkHeartbeat()
