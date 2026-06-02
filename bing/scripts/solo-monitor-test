@@ -9,7 +9,8 @@
 #   - MIDI 28–35 (control) → terminal should show TRACE CONTROL only (no piano)
 #   - other keys           → TRACE MONITOR_PLAY + piano
 #
-# Args: midiLog + monitorTrace (no :pad :sim :score)
+# Server args: solo midiLog monitorTrace (no :pad :sim)
+# debug-server uses the same :solo server + adds :sim:pad for concert.
 
 set -euo pipefail
 

@@ -1,14 +1,15 @@
 #!/bin/bash
-# Server + feeder + studioConductor (concert debug layout).
+# Concert debug: server (piano monitor) + feeder + studioConductor.
+#
+# The server uses the SAME Chuck args as solo-monitor-test (:solo) plus :sim:pad
+# for concert behavior. Reserved MIDI 28-35 is muted on the TimGM monitor.
 #
 # Usage:
 #   ./scripts/debug-server
 #   ./scripts/debug-server "USB Midi Cable"
-#   ./scripts/debug-server monitor-only          # server piano only (no feeder/GUI)
-#   ./scripts/debug-server monitor-only "USB Midi Cable"
 #
-# Server log: .local-logs/server.log
-# Keys 28-35 must log CONTROL (no piano); other keys log MONITOR / TRACE MONITOR_PLAY.
+# Watch server MIDI routing:
+#   tail -f .local-logs/server.log
 
 set -euo pipefail
 
@@ -25,17 +26,14 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_DIR="$PROJECT_DIR/.local-logs"
 mkdir -p "$LOG_DIR"
 
-MONITOR_ONLY=0
 MIDI_DEV="USB Midi Cable"
 for arg in "$@"; do
-  if [[ "$arg" == "monitor-only" ]]; then
-    MONITOR_ONLY=1
-  elif [[ "$arg" != [0-9]* ]]; then
-    MIDI_DEV="$arg"
-  fi
+  [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
 done
 
-SERVER_ARGS="${MIDI_DEV}:sim:pad:midiLog:monitorTrace"
+# Must match solo-monitor-test server args, plus concert sim/pad.
+SERVER_ARGS="${MIDI_DEV}:solo:sim:pad:midiLog:monitorTrace"
+
 FEEDER_PID=""
 SERVER_PID=""
 
@@ -45,46 +43,47 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
+command -v chuck >/dev/null 2>&1 || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
 
 echo "Stopping Chuck processes in $PROJECT_DIR..."
 pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
 sleep 1
 
-if [[ ! -f "$PROJECT_DIR/server.ck" ]]; then
-  echo "missing server.ck in $PROJECT_DIR" >&2
-  exit 1
-fi
-
-if [[ "$MONITOR_ONLY" -eq 1 ]]; then
-  echo "debug-server monitor-only — same server as concert, no feeder/clients/GUI"
-  echo "  dir: $PROJECT_DIR"
-  echo "  MIDI: $MIDI_DEV"
-  exec chuck "server.ck:${SERVER_ARGS}"
-fi
-
-for f in studioConductor.ck autonomousFeeder.ck; do
+for f in server.ck studioConductor.ck autonomousFeeder.ck; do
   if [[ ! -f "$PROJECT_DIR/$f" ]]; then
     echo "missing $f in $PROJECT_DIR" >&2
     exit 1
   fi
 done
 
+echo "debug-server"
+echo "  project: $PROJECT_DIR"
+echo "  server:  server.ck:${SERVER_ARGS}"
+echo "  log:     $LOG_DIR/server.log"
+echo ""
+
 chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
+
 chuck "$PROJECT_DIR/server.ck:${SERVER_ARGS}" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
-echo "  project: $PROJECT_DIR"
-echo "  server log: $LOG_DIR/server.log"
+
 sleep 2
-if ! grep -q "reserved-midi-v3" "$LOG_DIR/server.log" 2>/dev/null; then
-  echo "ERROR: server missing reserved-midi-v3 banner — wrong tree or failed start" >&2
-  tail -20 "$LOG_DIR/server.log" >&2
+if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+  echo "ERROR: server exited — see $LOG_DIR/server.log" >&2
+  tail -25 "$LOG_DIR/server.log" >&2
   exit 1
 fi
-echo "  server OK (reserved-midi-v3)"
-echo "  tail -f $LOG_DIR/server.log  — 28-35: CONTROL (no piano); else: MONITOR / TRACE MONITOR_PLAY"
-echo "  If you hear piano on 28 but log says CONTROL only, sound is not server.ck monitor."
+if ! grep -q "reserved-midi-v3" "$LOG_DIR/server.log" 2>/dev/null; then
+  echo "ERROR: server missing reserved-midi-v3 — pull latest bing" >&2
+  tail -25 "$LOG_DIR/server.log" >&2
+  exit 1
+fi
+
+echo "  server running (pid $SERVER_PID)"
+echo "  tail -f $LOG_DIR/server.log"
+echo "  keys 28-35 → CONTROL (no piano) | other keys → TRACE MONITOR_PLAY"
+echo ""
 
 chuck "$PROJECT_DIR/studioConductor.ck"
