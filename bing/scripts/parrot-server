@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-SLORK_BING="/Users/slork/slork/users/tae1han/bing"
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -L "$SOURCE" ]; do
   DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
@@ -10,12 +8,7 @@ while [ -L "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-
-if [[ -d "$SLORK_BING" ]]; then
-  PROJECT_DIR="$SLORK_BING"
-else
-  PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-fi
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 MIDI_DEV="USB Midi Cable"
 for arg in "$@"; do
@@ -24,6 +17,12 @@ done
 
 command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
+
+if pgrep -f "chuck.*$PROJECT_DIR/" >/dev/null 2>&1; then
+  echo "Stopping stale Chuck processes in $PROJECT_DIR..."
+  pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
+  sleep 1
+fi
 
 for f in studioConductor.ck server.ck autonomousFeeder.ck; do
   if [[ ! -f "$PROJECT_DIR/$f" ]]; then
@@ -36,7 +35,7 @@ chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
 LOG_DIR="$PROJECT_DIR/.local-logs"
 mkdir -p "$LOG_DIR"
-chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog" >"$LOG_DIR/server.log" 2>&1 &
+chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog:monitorTrace" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
 echo "  server log: $LOG_DIR/server.log"
 cleanup() { kill "$SERVER_PID" "$FEEDER_PID" 2>/dev/null || true; }

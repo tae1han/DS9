@@ -49,6 +49,7 @@ public class bufferState
     int _lastNoteOffPitch;
     int _pedalDown;
     int _pedalPendingOff[128];
+    0 => int _rawMidiLog;
 
     fun void _mqPush(int isOn, int pitch, float vel)
     {
@@ -89,6 +90,8 @@ public class bufferState
     }
 
     fun int mqPending() { return _mqCount; }
+
+    fun void rawMidiLog(int enable) { enable => _rawMidiLog; }
 
     fun void _controlEmit(int isOn, int pitch, float vel)
     {
@@ -185,6 +188,9 @@ public class bufferState
             min => now;
             while (min.recv(msg))
             {
+                if(_rawMidiLog)
+                    <<< "RAW", msg.data1, msg.data2, msg.data3 >>>;
+
                 (now - recStart) / ms => float phrase_elapsed_ms;
                 (now - absStart) / ms => float abs_elapsed_ms;
 

@@ -1,6 +1,7 @@
 @import "config.ck"
 @import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
+@import "instruments/slorkPianoMonitorInst.ck"
 @import {"bufferState.ck"}
 @import {"conductor.ck"}
 @import {"conductorScenes.ck"}
@@ -52,6 +53,7 @@ bufferState bs;
 SILENCE_THRESHOLD_SEC => bs.silenceThreshold;
 ROLLING_WINDOW_SEC => bs.rollingWindow;
 bs.device(MIDI_DEVICE);
+if(MIDI_LOG) bs.rawMidiLog(1);
 
 OscOut xmit;
 OscOut controlOut;
@@ -141,8 +143,8 @@ rev.mix(0.05);
 for(0 => int i; i < dac.channels(); i++)
     rev => dac.chan(i);
 
-// TimGM piano: ezFluidInst => master => dac. Control MIDI 28–35 never calls _monitorMidi.
-ezFluidInst @ monitorInst;
+// TimGM piano monitor. Control MIDI 28–35: separate path + instrument filter.
+SlorkPianoMonitorInst @ monitorInst;
 int _monVoice[128];
 0 => int _monitorReady;
 
@@ -158,15 +160,21 @@ fun void _initMonitor()
     }
     f.close();
 
-    new ezFluidInst(MONITOR_SF2, 0) @=> monitorInst;
+    new SlorkPianoMonitorInst(MONITOR_SF2, 0) @=> monitorInst;
     monitorInst.numVoices(128);
     if(SIM_MONITOR) monitorInst.gain(4.5);
     else monitorInst.gain(10);
     monitorInst => master;
 
+    int reserved[8];
+    28 => reserved[0];
+    for(1 => int i; i < 8; i++)
+        (29 + i - 1) => reserved[i];
+    monitorInst.setReservedPitches(reserved);
+
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "bing monitor ready — control MIDI 28-35 (no piano)" >>>;
+    <<< "bing server build: reserved-midi-v3 | monitor ready | MIDI 28-35 no piano" >>>;
 }
 
 fun void _monitorMidi(int on, int pitch, float vel)
@@ -251,8 +259,8 @@ fun void _controlMidiLoop()
 
         if(MIDI_LOG)
         {
-            if(on) <<< "MIDI", pitch, vel >>>;
-            else <<< "MIDI off", pitch >>>;
+            if(on) <<< "CONTROL (no piano)", pitch, vel >>>;
+            else <<< "CONTROL off", pitch >>>;
         }
 
         if(MONITOR_TRACE)
@@ -277,10 +285,17 @@ fun void _midiDispatch()
         bs.midiQueueEvent => now;
         while(bs.mqPop(on, pitch, vel))
         {
+            if(_isControlMidi(pitch[0]))
+            {
+                if(MIDI_LOG)
+                    <<< "WARN: control pitch", pitch[0], "in musical queue (ignored)" >>>;
+                continue;
+            }
+
             if(MIDI_LOG)
             {
-                if(on[0]) <<< "MIDI", pitch[0], vel[0] >>>;
-                else <<< "MIDI off", pitch[0] >>>;
+                if(on[0]) <<< "MONITOR", pitch[0], vel[0] >>>;
+                else <<< "MONITOR off", pitch[0] >>>;
             }
 
             if(FIRST_NOTE_MUTE && !_firstNoteMuted && on[0])
@@ -305,6 +320,7 @@ fun void _midiDispatch()
     }
 }
 
+<<< "bing server dir:", me.dir() >>>;
 <<< "v10 server OSC:", MULTICAST_ADDR, "slots:", NUM_AGENT_SLOTS >>>;
 
 fun void _toggleOwlSlotsMode()
