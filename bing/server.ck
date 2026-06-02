@@ -24,7 +24,6 @@ true => int MONITOR_USER_INPUT;
 me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 
 0 => int AUTO_SCORE;
-0 => int MONITOR_DEBUG;
 0 => int MIDI_LOG;
 0 => int SIM_MONITOR;
 0 => int FIRST_NOTE_MUTE;
@@ -44,7 +43,6 @@ for(0 => int i; i < me.args(); i++)
     else if(a == "cues" || a == "score") 1 => AUTO_SCORE;
     else if(a == "sim") 1 => SIM_MONITOR;
     else if(a == "pad" || a == "firstNoteMute") 1 => FIRST_NOTE_MUTE;
-    else if(a == "monitorDebug") 1 => MONITOR_DEBUG;
     else if(a == "midiLog") 1 => MIDI_LOG;
     else a => MIDI_DEVICE;
 }
@@ -57,9 +55,16 @@ bs.device(MIDI_DEVICE);
 OscOut xmit;
 OscOut controlOut;
 
+fun int _isControlMidi(int pitch)
+{
+    if(pitch == MIDI_MON_OWL) return 1;
+    if(pitch >= MIDI_MON_MOV_LO && pitch <= MIDI_MON_MOV_HI) return 1;
+    return 0;
+}
+
 fun void _oscForwardNoteOn(int pitch, float vel)
 {
-    if(_ensembleMuted || _midiSuppressMonitor(pitch)) return;
+    if(_ensembleMuted || _isControlMidi(pitch)) return;
     for(int slot; slot < NUM_AGENT_SLOTS; slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
@@ -72,7 +77,7 @@ fun void _oscForwardNoteOn(int pitch, float vel)
 
 fun void _oscForwardNoteOff(int pitch)
 {
-    if(_ensembleMuted || _midiSuppressMonitor(pitch)) return;
+    if(_ensembleMuted || _isControlMidi(pitch)) return;
     for(int slot; slot < NUM_AGENT_SLOTS; slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
@@ -134,25 +139,13 @@ else master.gain(0.8);
 lpf.freq(7000);
 comp.limit();
 rev.mix(0.05);
+for(int i; i < dac.channels(); i++)
+    rev => dac.chan(i);
 
-// ── Piano monitor (TimGM) ─────────────────────────────────────────────
-// ONLY audio path for your keyboard on the server machine:
-//   USB MIDI → bufferState.listen() → midi queue → _midiDispatch()
-//   → _monitorNoteOn/Off() → SlorkPianoMonitorInst (TimGM6mb.sf2) → master → DAC
-// There is no second midiPlayer / direct-MIDI-to-synth path in bing.
-// Reserved keys 28–35 must never call _monitorNoteOn (see _midiDispatch).
+// TimGM piano monitor: SlorkPianoMonitorInst => master => dac (no extra MIDI paths).
 int _monVoice[128];
 SlorkPianoMonitorInst @ monitorInst;
 0 => int _monitorReady;
-0 => int _dacWired;
-
-fun void _wireDac()
-{
-    if(_dacWired) return;
-    for(int i; i < dac.channels(); i++)
-        rev => dac.chan(i);
-    1 => _dacWired;
-}
 
 fun void _initMonitor()
 {
@@ -172,115 +165,45 @@ fun void _initMonitor()
     else monitorInst.gain(10);
     monitorInst => master;
 
-    int monitorReserved[8];
-    MIDI_MON_OWL => monitorReserved[0];
-    MIDI_MON_MOV_LO => monitorReserved[1];
-    (MIDI_MON_MOV_LO + 1) => monitorReserved[2];
-    (MIDI_MON_MOV_LO + 2) => monitorReserved[3];
-    (MIDI_MON_MOV_LO + 3) => monitorReserved[4];
-    (MIDI_MON_MOV_LO + 4) => monitorReserved[5];
-    (MIDI_MON_MOV_LO + 5) => monitorReserved[6];
-    MIDI_MON_MOV_HI => monitorReserved[7];
-    monitorInst.setReservedPitches(monitorReserved);
+    int reserved[8];
+    MIDI_MON_OWL => reserved[0];
+    for(1 => int i; i < 8; i++)
+        (MIDI_MON_MOV_LO + i - 1) => reserved[i];
+    monitorInst.setReservedPitches(reserved);
 
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "v10 monitor: TimGM piano:", MONITOR_SF2,
-        "reserved MIDI:", monitorReserved.size() >>>;
+    <<< "v10 monitor:", MONITOR_SF2, "reserved MIDI 28–35" >>>;
 }
 
-fun int _midiSuppressMonitor(int pitch)
+fun void _monitorMidi(int on, int pitch, float vel)
 {
-    if(monitorInst != null && _monitorReady)
-        return monitorInst.isReserved(pitch);
-    return 0;
-}
-
-fun void _logMidi(int on, int pitch, float vel)
-{
-    if(_midiSuppressMonitor(pitch))
-    {
-        if(on)
-        {
-            int owl;
-            int mov;
-            if(pitch == MIDI_MON_OWL) 1 => owl; else 0 => owl;
-            0 => mov;
-            if(pitch >= MIDI_MON_MOV_LO && pitch <= MIDI_MON_MOV_HI)
-                pitch - MIDI_MON_MOV_LO + 2 => mov;
-            <<< "MIDI reserved:", pitch, "vel", vel,
-                "owl:", owl, "mov:", mov, "→ no monitor" >>>;
-        }
-        else
-            <<< "MIDI reserved off:", pitch >>>;
-        return;
-    }
-    if(!MIDI_LOG && !MONITOR_DEBUG) return;
-    if(on)
-        <<< "MIDI in: noteOn pitch", pitch, "vel", vel >>>;
-    else
-        <<< "MIDI in: noteOff pitch", pitch >>>;
-}
-
-fun void _monitorNoteOff(int pitch)
-{
-    if(!_monitorReady || monitorInst == null) return;
+    if(!MONITOR_USER_INPUT || !_monitorReady || monitorInst == null) return;
     if(pitch < 0 || pitch > 127) return;
-    if(_midiSuppressMonitor(pitch)) return;
+
     ezNote n;
     n.pitch(pitch);
-    n.velocity(0.5);
-    if(_monVoice[pitch] >= 0)
+    n.velocity(vel);
+
+    if(on)
     {
+        if(_monVoice[pitch] >= 0)
+            _monitorMidi(0, pitch, vel);
+        monitorInst.allocate_voice(n) => int v;
+        if(v < 0) return;
+        v => _monVoice[pitch];
+        monitorInst.noteOn(n, v);
+    }
+    else
+    {
+        if(_monVoice[pitch] < 0) return;
         monitorInst.noteOff(n, _monVoice[pitch]);
         monitorInst.release_voice(_monVoice[pitch]);
         -1 => _monVoice[pitch];
     }
 }
 
-fun void _monitorNoteOn(int pitch, float vel)
-{
-    if(!MONITOR_USER_INPUT || !_monitorReady) return;
-    if(pitch < 0 || pitch > 127) return;
-    if(_midiSuppressMonitor(pitch))
-    {
-        <<< "ERROR: _monitorNoteOn called for reserved pitch", pitch,
-            "— fix _midiDispatch" >>>;
-        return;
-    }
-
-    ezNote n;
-    n.pitch(pitch);
-    n.velocity(vel);
-
-    if(_monVoice[pitch] >= 0)
-        _monitorNoteOff(pitch);
-
-    monitorInst.allocate_voice(n) => int v;
-    if(v < 0)
-    {
-        for(0 => int p; p < 128; p++)
-        {
-            if(_monVoice[p] >= 0)
-            {
-                _monitorNoteOff(p);
-                break;
-            }
-        }
-        monitorInst.allocate_voice(n) => v;
-    }
-    if(v < 0)
-    {
-        if(MONITOR_DEBUG) <<< "monitor noteOn dropped (no voice)", pitch >>>;
-        return;
-    }
-    v => _monVoice[pitch];
-    monitorInst.noteOn(n, v);
-    if(MONITOR_DEBUG || MIDI_LOG)
-        <<< "MONITOR noteOn pitch", pitch, "vel", vel >>>;
-    if(pitch == 28)
-        <<< "WARNING: monitor played pitch 28 — should be suppressed" >>>;
-}
+_initMonitor();
 
 fun void _applyFirstNoteMute()
 {
@@ -326,49 +249,39 @@ fun void _midiDispatch()
         bs.midiQueueEvent => now;
         while(bs.mqPop(on, pitch, vel))
         {
-            _logMidi(on[0], pitch[0], vel[0]);
-
-            if(pitch[0] == MIDI_MON_OWL)
+            if(MIDI_LOG)
             {
-                if(on[0])
-                {
-                    _monitorNoteOff(pitch[0]);
-                    _toggleOwlSlotsMode();
-                }
-                else _monitorNoteOff(pitch[0]);
-                continue;
+                if(on[0]) <<< "MIDI", pitch[0], vel[0] >>>;
+                else <<< "MIDI off", pitch[0] >>>;
             }
 
-            if(pitch[0] >= MIDI_MON_MOV_LO && pitch[0] <= MIDI_MON_MOV_HI)
+            if(_isControlMidi(pitch[0]))
             {
-                if(on[0]) _triggerMovementFromMidi(pitch[0]);
-                _monitorNoteOff(pitch[0]);
+                if(pitch[0] == MIDI_MON_OWL && on[0])
+                    _toggleOwlSlotsMode();
+                else if(on[0])
+                    _triggerMovementFromMidi(pitch[0]);
                 continue;
             }
 
             if(FIRST_NOTE_MUTE && !_firstNoteMuted && on[0])
             {
                 _applyFirstNoteMute();
-                _monitorNoteOn(pitch[0], vel[0]);
-                continue;
-            }
-
-            if(_ensembleMuted)
-            {
-                if(on[0]) _monitorNoteOn(pitch[0], vel[0]);
-                else _monitorNoteOff(pitch[0]);
+                _monitorMidi(1, pitch[0], vel[0]);
                 continue;
             }
 
             if(on[0])
             {
-                _monitorNoteOn(pitch[0], vel[0]);
-                _oscForwardNoteOn(pitch[0], vel[0]);
+                _monitorMidi(1, pitch[0], vel[0]);
+                if(!_ensembleMuted)
+                    _oscForwardNoteOn(pitch[0], vel[0]);
             }
             else
             {
-                _monitorNoteOff(pitch[0]);
-                _oscForwardNoteOff(pitch[0]);
+                _monitorMidi(0, pitch[0], 0.0);
+                if(!_ensembleMuted)
+                    _oscForwardNoteOff(pitch[0]);
             }
         }
     }
@@ -383,9 +296,6 @@ spork ~ _forwardPhraseComplete();
 spork ~ _forwardSilence();
 
 <<< "v10 server OSC:", MULTICAST_ADDR, "slots:", NUM_AGENT_SLOTS >>>;
-
-_initMonitor();
-_wireDac();
 
 Conductor conductor(controlOut, MULTICAST_ADDR, NUM_AGENT_SLOTS);
 ConductorScenes scenes(conductor, NUM_AGENT_SLOTS);

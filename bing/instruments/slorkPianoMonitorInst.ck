@@ -46,14 +46,7 @@ public class SlorkPianoMonitorInst extends ezFluidInst
     fun void noteOn(ezNote note, int voice)
     {
         note.pitch() $ int => int p;
-        isReserved(p) => int reserved;
-        if(reserved)
-            <<< "SlorkPianoMonitor noteOn SKIP pitch", p, "vel", note.velocity(),
-                "voice", voice, "reserved:", _reserved.size() >>>;
-        else
-            <<< "SlorkPianoMonitor noteOn PLAY pitch", p, "vel", note.velocity(),
-                "voice", voice >>>;
-        if(reserved) return;
+        if(isReserved(p)) return;
         fs.noteOn(p, (note.velocity() * 127) $ int, 0);
     }
 

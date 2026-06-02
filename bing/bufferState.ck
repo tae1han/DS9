@@ -183,8 +183,6 @@ public class bufferState
 
                     if(SMIR.skipForPitchSet(pitch))
                     {
-                        <<< "bufferState: reserved noteOn pitch", pitch,
-                            "vel", velocity, "(queued for server control only)" >>>;
                         _mqPush(1, pitch, velocity / 127.0);
                         continue;
                     }
