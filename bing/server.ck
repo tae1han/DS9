@@ -1,4 +1,5 @@
 @import "config.ck"
+@import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import {"bufferState.ck"}
 @import {"conductor.ck"}
@@ -166,7 +167,7 @@ fun void _initMonitor()
 
 fun int _midiSuppressMonitor(int pitch)
 {
-    return pitch == OWL_MIDI_TOGGLE;
+    return SMIR.skipForPitchSet(pitch);
 }
 
 fun void _monitorNoteOff(int pitch)
@@ -248,7 +249,7 @@ fun void _midiDispatch()
         bs.midiQueueEvent => now;
         while(bs.mqPop(on, pitch, vel))
         {
-            if(pitch[0] == OWL_MIDI_TOGGLE)
+            if(SMIR.skipForPitchSet(pitch[0]))
             {
                 if(on[0])
                 {
@@ -393,7 +394,7 @@ else
         <<< "v10 server — :pad: first MIDI note mutes ensemble" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
-    <<< "v10 server — MIDI", OWL_MIDI_TOGGLE, "toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop (silent monitor)" >>>;
+    <<< "v10 server — MIDI 28 toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop (silent monitor)" >>>;
     <<< "v10 server — link ping port", SERVER_LINK_PORT, "pong", SERVER_LINK_REPLY_PORT >>>;
 }
 

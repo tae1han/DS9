@@ -111,7 +111,7 @@ public class bufferState
         for(int i; i < src.size(); i++)
         {
             src[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ezNote n(src[i].onset(), src[i].beats(), src[i].pitch(), src[i].velocity());
             completedPhrase.add(n);
         }
@@ -170,7 +170,7 @@ public class bufferState
                     msg.data2 => int pitch;
                     msg.data3 => int velocity;
 
-                    if(pitch == OWL_MIDI_TOGGLE)
+                    if(SMIR.skipForPitchSet(pitch))
                     {
                         _mqPush(1, pitch, velocity / 127.0);
                         continue;
@@ -211,7 +211,7 @@ public class bufferState
                 else if (msg.data1 == 128 || (msg.data1 == 144 && msg.data3 == 0))
                 {
                     msg.data2 => int pitch;
-                    if(pitch == OWL_MIDI_TOGGLE)
+                    if(SMIR.skipForPitchSet(pitch))
                     {
                         _mqPush(0, pitch, 0.0);
                         continue;
@@ -296,7 +296,7 @@ public class bufferState
             for (int i; i < current.size(); i++)
             {
                 current[i].pitch() $ int => int p;
-                if(excludeFromPitchSet(p)) continue;
+                if(SMIR.skipForPitchSet(p)) continue;
                 if (current[i].onset() >= cutoff_beats)
                     kept << current[i];
             }

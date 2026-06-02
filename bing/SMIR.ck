@@ -1,5 +1,4 @@
 @import "smuck"
-@import "config.ck"
 
 public class SMIR
 {
@@ -17,9 +16,10 @@ public class SMIR
         n @=> notes;
     }
 
+    // Must match config.ck OWL_MIDI_TOGGLE (static methods cannot read imported globals).
     fun static int skipForPitchSet(int pitch)
     {
-        return excludeFromPitchSet(pitch);
+        return pitch == 28;
     }
 
     fun static ezNote[] filterControlPitches(ezNote n[])
@@ -29,7 +29,7 @@ public class SMIR
         for(int i; i < n.size(); i++)
         {
             n[i].pitch() $ int => int p;
-            if(!excludeFromPitchSet(p)) out << n[i];
+            if(!skipForPitchSet(p)) out << n[i];
         }
         return out;
     }
@@ -106,7 +106,7 @@ public class SMIR
         Math.FLOAT_MAX => float min;
         for (int i; i < n.size(); i++) {
             n[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(skipForPitchSet(p)) continue;
             p => float pitch;
             if (pitch < min) {
                 pitch => min;
@@ -126,7 +126,7 @@ public class SMIR
         -Math.FLOAT_MAX => float max;
         for (int i; i < n.size(); i++) {
             n[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(skipForPitchSet(p)) continue;
             p => float pitch;
             if (pitch > max) {
                 pitch => max;
@@ -161,7 +161,7 @@ public class SMIR
 
         for (int i; i < n.size(); i++) {
             n[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(skipForPitchSet(p)) continue;
             p => float pitch;
             Math.fabs(pitch - center) => float diff;
             if (diff < minDiff) {
@@ -183,7 +183,7 @@ public class SMIR
         int set[128];
         for (int i; i < n.size(); i++) {
             n[i].pitch() $ int => int pitch;
-            if(excludeFromPitchSet(pitch)) continue;
+            if(skipForPitchSet(pitch)) continue;
             set[pitch]++;
         }
         return set;
@@ -201,7 +201,7 @@ public class SMIR
         for(int i; i < n.size(); i++)
         {
             n[i].pitch() $ int => int pitch;
-            if(excludeFromPitchSet(pitch)) continue;
+            if(skipForPitchSet(pitch)) continue;
             n[i].beats() +=> weightedSet[pitch];
         }
         return weightedSet;
@@ -311,7 +311,7 @@ public class SMIR
         for(int i; i < n.size(); i++)
         {
             n[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(skipForPitchSet(p)) continue;
             p => float pitch;
             pitch +=> sum;
             count++;
@@ -322,7 +322,7 @@ public class SMIR
         for(int i; i < n.size(); i++)
         {
             n[i].pitch() $ int => int p;
-            if(excludeFromPitchSet(p)) continue;
+            if(skipForPitchSet(p)) continue;
             p => float pitch;
             (pitch - mean) * (pitch - mean) +=> variance;
         }

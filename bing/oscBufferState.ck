@@ -43,7 +43,7 @@ public class oscBufferState extends bufferState
                     omsg.getInt(0) => int pitch;
                     omsg.getFloat(1) => float velocity;
 
-                    if(excludeFromPitchSet(pitch))
+                    if(SMIR.skipForPitchSet(pitch))
                     {
                         _mqPush(1, pitch, velocity);
                         continue;
@@ -80,7 +80,7 @@ public class oscBufferState extends bufferState
                 else if(omsg.address == "/ds9/noteOff")
                 {
                     omsg.getInt(0) => int pitch;
-                    if(excludeFromPitchSet(pitch))
+                    if(SMIR.skipForPitchSet(pitch))
                     {
                         _mqPush(0, pitch, 0.0);
                         continue;

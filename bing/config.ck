@@ -14,11 +14,6 @@
 // Low E on 88-key piano — server-only control (no monitor / phrase / pitchset).
 28 => int OWL_MIDI_TOGGLE;
 
-fun int excludeFromPitchSet(int pitch)
-{
-    return pitch == OWL_MIDI_TOGGLE;
-}
-
 ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
 
 // Local sim / default layout: slot i hosts role i (one bird per laptop).
