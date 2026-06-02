@@ -15,7 +15,7 @@
 7 => int ROLE_OWL;
 
 ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
-"127.0.0.1" => string MULTICAST_ADDR;
+"224.0.0.1" => string MULTICAST_ADDR;
 8889 => int STATUS_PORT;
 8891 => int PULSE_PORT;
 
