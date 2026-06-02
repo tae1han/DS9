@@ -1,0 +1,43 @@
+#!/bin/bash
+set -euo pipefail
+
+networksetup -setairportpower en0 off 2>/dev/null || true
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+MIDI_DEV="USB Midi Cable"
+for arg in "$@"; do
+  [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
+done
+
+cleanup() {
+  kill "$SERVER_PID" "$FEEDER_PID" 2>/dev/null || true
+  networksetup -setairportpower en0 on 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
+cd "$PROJECT_DIR"
+
+for f in studioConductor.ck server.ck autonomousFeeder.ck; do
+  if [[ ! -f "$PROJECT_DIR/$f" ]]; then
+    echo "missing $f in $PROJECT_DIR" >&2
+    echo "run from bing/: ./scripts/debug-server" >&2
+    exit 1
+  fi
+done
+
+chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
+FEEDER_PID=$!
+chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim" >/dev/null 2>&1 &
+SERVER_PID=$!
+sleep 1
+
+chuck "$PROJECT_DIR/studioConductor.ck"

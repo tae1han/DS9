@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+networksetup -setairportpower en0 off 2>/dev/null || true
+
+if [[ $# -lt 1 ]]; then
+  echo "usage: $0 <slot 0-7>" >&2
+  exit 1
+fi
+
+SLOT="$1"
+if [[ ! "$SLOT" =~ ^[0-7]$ ]]; then
+  echo "slot must be 0-7" >&2
+  exit 1
+fi
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cleanup() {
+  networksetup -setairportpower en0 on 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
+cd "$PROJECT_DIR"
+
+chuck -c8 "client.ck:${SLOT}:pkmn:flash" --bufsize:1024
