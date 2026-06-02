@@ -145,6 +145,17 @@ public class bufferState
     fun float silenceSeconds() { return (now - _lastNoteTime) / second; }
     fun int inPhrase() { return _inPhrase; }
 
+    fun void clearHumanBuffers()
+    {
+        phraseBuffer.notes().clear();
+        completedPhrase.notes().clear();
+        rollingBuffer.notes().clear();
+        0 => _inPhrase;
+        phraseSmir.setFiltered(phraseBuffer.notes());
+        completedSmir.setFiltered(completedPhrase.notes());
+        rollingSmir.setFiltered(rollingBuffer.notes());
+    }
+
     // MIDI listener (similar pattern to ezScore importMIDI parser)
     fun void listen()
     {

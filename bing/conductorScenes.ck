@@ -390,6 +390,8 @@ public class ConductorScenes
         80::ms => now;
         _clearOwlMemory(owlA);
         _clearOwlMemory(owlB);
+        _c.sendActivate(owlB, 0);
+        _c.sendPanic(owlB);
         _announcePhase("Owl A develop (listen to you)");
         _c.sendCueAll("Movement 2 — Owl A develop");
         _c.sendRole(owlA, 7);

@@ -25,6 +25,7 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 
 0 => int AUTO_SCORE;
 0 => int MONITOR_DEBUG;
+0 => int MIDI_LOG;
 0 => int SIM_MONITOR;
 0 => int FIRST_NOTE_MUTE;
 0 => int _firstNoteMuted;
@@ -41,6 +42,7 @@ for(0 => int i; i < me.args(); i++)
     else if(a == "sim") 1 => SIM_MONITOR;
     else if(a == "pad" || a == "firstNoteMute") 1 => FIRST_NOTE_MUTE;
     else if(a == "monitorDebug") 1 => MONITOR_DEBUG;
+    else if(a == "midiLog") 1 => MIDI_LOG;
     else a => MIDI_DEVICE;
 }
 
@@ -170,6 +172,17 @@ fun int _midiSuppressMonitor(int pitch)
     return SMIR.skipForPitchSet(pitch);
 }
 
+fun void _logMidi(int on, int pitch, float vel)
+{
+    if(!MIDI_LOG && !MONITOR_DEBUG) return;
+    if(on)
+        <<< "MIDI in: noteOn pitch", pitch, "vel", vel,
+            "(owlToggle:", SMIR.isOwlToggleMidi(pitch), "movement:",
+            SMIR.movementFromMidi(pitch), ")" >>>;
+    else
+        <<< "MIDI in: noteOff pitch", pitch >>>;
+}
+
 fun void _monitorNoteOff(int pitch)
 {
     if(!_monitorReady || monitorInst == null) return;
@@ -219,23 +232,42 @@ fun void _monitorNoteOn(int pitch, float vel)
     }
     v => _monVoice[pitch];
     monitorInst.noteOn(n, v);
-    if(MONITOR_DEBUG) <<< "monitor noteOn", pitch, vel >>>;
+    if(MONITOR_DEBUG || MIDI_LOG)
+        <<< "MONITOR noteOn pitch", pitch, "vel", vel >>>;
+    if(pitch == 28)
+        <<< "WARNING: monitor played pitch 28 — should be suppressed" >>>;
 }
 
 fun void _applyFirstNoteMute()
 {
     if(_firstNoteMuted) return;
     1 => _firstNoteMuted;
-    // Studio/sim: keep OSC flowing to client buffers — movements need phrase + silence events.
-    if(SIM_MONITOR)
-    {
-        <<< ">>> first MIDI (sim — still forwarding to clients)" >>>;
-        return;
-    }
     1 => _ensembleMuted;
-    // Monitor-only from here — do not deactivate clients. The ChuGL / GameTrak
-    // conductor owns agent activation (applyMovement2, etc.).
-    <<< ">>> first MIDI — monitor only (conductor controls agents)" >>>;
+    bs.clearHumanBuffers();
+    conductor.sendFeederPause(1);
+    conductor.sendMidiForward(0);
+    for(int i; i < NUM_AGENT_SLOTS; i++)
+    {
+        conductor.sendPanic(i);
+        conductor.sendActivate(i, 0);
+        conductor.sendParam(i, "clearMemory", 1);
+    }
+    <<< ">>> first MIDI — muted, feeder paused, all agents off, phrase memory cleared" >>>;
+    <<< ">>> play solo on monitor; MIDI 29–35 = movements 2–8" >>>;
+}
+
+fun void _triggerMovementFromMidi(int pitch)
+{
+    SMIR.movementFromMidi(pitch) => int mov;
+    if(mov < 2 || mov > 8) return;
+    <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
+    if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
+    else if(mov == 3) scenes.applyMovement3(OWL_SLOT_A, OWL_SLOT_B, 0, 4, 1, 3);
+    else if(mov == 4) scenes.applyMovement4(6, 0, 2, 4);
+    else if(mov == 5) scenes.applyMovement5();
+    else if(mov == 6) scenes.applyMovement6();
+    else if(mov == 7) scenes.applyMovement7();
+    else if(mov == 8) scenes.applyMovement8();
 }
 
 fun void _midiDispatch()
@@ -249,7 +281,9 @@ fun void _midiDispatch()
         bs.midiQueueEvent => now;
         while(bs.mqPop(on, pitch, vel))
         {
-            if(SMIR.skipForPitchSet(pitch[0]))
+            _logMidi(on[0], pitch[0], vel[0]);
+
+            if(SMIR.isOwlToggleMidi(pitch[0]))
             {
                 if(on[0])
                 {
@@ -260,10 +294,17 @@ fun void _midiDispatch()
                 continue;
             }
 
+            if(SMIR.isMovementMidi(pitch[0]))
+            {
+                if(on[0]) _triggerMovementFromMidi(pitch[0]);
+                _monitorNoteOff(pitch[0]);
+                continue;
+            }
+
             if(FIRST_NOTE_MUTE && !_firstNoteMuted && on[0])
             {
-                _monitorNoteOn(pitch[0], vel[0]);
                 _applyFirstNoteMute();
+                _monitorNoteOn(pitch[0], vel[0]);
                 continue;
             }
 
@@ -391,10 +432,10 @@ if(AUTO_SCORE)
 else
 {
     if(FIRST_NOTE_MUTE)
-        <<< "v10 server — :pad: first MIDI note mutes ensemble" >>>;
+        <<< "v10 server — :pad: first MIDI = mute, deactivate, clear owl memory" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
-    <<< "v10 server — MIDI 28 toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop (silent monitor)" >>>;
+    <<< "v10 server — MIDI 28 owl toggle | 29–35 movements 2–8 | :midiLog for pitch debug" >>>;
     <<< "v10 server — link ping port", SERVER_LINK_PORT, "pong", SERVER_LINK_REPLY_PORT >>>;
 }
 

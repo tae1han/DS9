@@ -36,7 +36,7 @@ done
 
 chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
-chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim" >/dev/null 2>&1 &
+chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog" >/dev/null 2>&1 &
 SERVER_PID=$!
 sleep 1
 

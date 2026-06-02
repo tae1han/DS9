@@ -16,10 +16,26 @@ public class SMIR
         n @=> notes;
     }
 
-    // Must match config.ck OWL_MIDI_TOGGLE (static methods cannot read imported globals).
-    fun static int skipForPitchSet(int pitch)
+    // Must match config.ck reserved MIDI (static methods cannot read imported globals).
+    fun static int isOwlToggleMidi(int pitch)
     {
         return pitch == 28;
+    }
+
+    fun static int isMovementMidi(int pitch)
+    {
+        return pitch >= 29 && pitch <= 35;
+    }
+
+    fun static int movementFromMidi(int pitch)
+    {
+        if(!isMovementMidi(pitch)) return 0;
+        return pitch - 27;
+    }
+
+    fun static int skipForPitchSet(int pitch)
+    {
+        return isOwlToggleMidi(pitch) || isMovementMidi(pitch);
     }
 
     fun static ezNote[] filterControlPitches(ezNote n[])

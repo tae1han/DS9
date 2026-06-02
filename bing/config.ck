@@ -11,8 +11,10 @@
 6 => int ROLE_SWAN;
 7 => int ROLE_OWL;
 
-// Low E on 88-key piano — server-only control (no monitor / phrase / pitchset).
+// Reserved MIDI (no monitor / phrase / pitchset). 28 = owl toggle; 29–35 = movements 2–8.
 28 => int OWL_MIDI_TOGGLE;
+29 => int MIDI_MOVEMENT_FIRST;
+35 => int MIDI_MOVEMENT_LAST;
 
 ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
 
