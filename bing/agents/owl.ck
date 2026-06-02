@@ -21,6 +21,7 @@ public class Owl extends Agent
     int _seeding;
     int _canTrySilenceSeed;
     time _seedAllowedAfter;
+    time _ignorePhraseCompleteUntil;
 
     fun Owl()
     {
@@ -50,6 +51,7 @@ public class Owl extends Agent
             {
                 1 => _canTrySilenceSeed;
                 0 => _seeding;
+                spork ~ _seedKickAfterModeChange();
             }
         }
         else if(param == "quantizeRecall") val $ int => _quantizeRecall;
@@ -69,6 +71,8 @@ public class Owl extends Agent
         else if(param == "clearMemory")
         {
             if(_mem != null) _mem.clear();
+            if(source != null) source.clearHumanBuffers();
+            now + 0.75::second => _ignorePhraseCompleteUntil;
             _playTicket++;
             stopAll();
             0 => _seeding;
@@ -265,14 +269,26 @@ public class Owl extends Agent
         return recalled;
     }
 
+    fun void _seedKickAfterModeChange()
+    {
+        150::ms => now;
+        if(!enabled || _mode != 1) return;
+        if(_mem == null || _mem.count() == 0) return;
+        if(_trySeed()) 0 => _canTrySilenceSeed;
+    }
+
     fun void onPhraseComplete()
     {
         if(!enabled) return;
         if(listenTarget != LISTEN_HUMAN) return;
+        if(now < _ignorePhraseCompleteUntil) return;
         if(_mode == 1)
         {
             0 => _seeding;
-            1 => _canTrySilenceSeed;
+            if(_mem != null && _mem.count() > 0 && !_seeding)
+                _trySeed();
+            else
+                1 => _canTrySilenceSeed;
         }
         else _developHuman(0);
     }
@@ -281,7 +297,7 @@ public class Owl extends Agent
     {
         if(!enabled) return;
         if(_mode != 1) return;
-        if(!_eddiesEnabled) return;
+        if(_phraseOnlyEddies && !_eddiesEnabled) return;
         if(_seeding) return;
         if(!_canTrySilenceSeed) return;
         if(now < _seedAllowedAfter) return;

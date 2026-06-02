@@ -311,6 +311,32 @@ public class ConductorScenes
             _c.sendParam(slot, "seedProb", 0);
             _c.sendActivate(slot, 0);
         }
+        // Second pulse so clients flush phraseMem + listen buffers before M2 develop.
+        80::ms => now;
+        _clearOwlMemory(owlA);
+        _clearOwlMemory(owlB);
+    }
+
+    fun void sendOwlToggleMode(int isSeed, int owlA, int owlB)
+    {
+        int slots[2];
+        owlA => slots[0];
+        owlB => slots[1];
+        for(0 => int si; si < 2; si++)
+        {
+            slots[si] => int slot;
+            if(slot < 0 || slot >= _n) continue;
+            if(isSeed)
+            {
+                _owlSeedDefaults(slot);
+                _c.sendParam(slot, "owlMode", 1);
+            }
+            else
+            {
+                _owlDevelopDefaults(slot);
+                _c.sendParam(slot, "owlMode", 0);
+            }
+        }
     }
 
     fun void _owlDevelopDefaults(int slot)
@@ -358,6 +384,7 @@ public class ConductorScenes
     fun void _owlActivateSeed(int slot)
     {
         _c.sendRole(slot, 7);
+        _clearOwlMemory(slot);
         _owlSeedDefaults(slot);
         _c.sendListenTarget(slot, -1);
         _c.sendActivate(slot, 0);
@@ -368,6 +395,7 @@ public class ConductorScenes
     fun void _owlActivateDevelop(int slot)
     {
         _c.sendRole(slot, 7);
+        _clearOwlMemory(slot);
         _owlDevelopDefaults(slot);
         _owlMovementGain(slot);
         _c.sendListenTarget(slot, -1);
@@ -378,6 +406,14 @@ public class ConductorScenes
 
     fun void _movement2Timeline(int gen, int owlA, int owlB)
     {
+        10::second => now;
+        if(gen != _sceneGen) return;
+        _owlActivateSeed(owlA);
+        _owlMovementGain(owlA);
+        _announcePhase("Owl A → seed mode");
+        _c.sendCueAll("Movement 2 — Owl A seed");
+        <<< "movement 2: Owl A seed (slot", owlA, ") @ 10s" >>>;
+
         8::second => now;
         if(gen != _sceneGen) return;
         _owlActivateSeed(owlB);
@@ -386,18 +422,10 @@ public class ConductorScenes
         _c.sendParam(owlB, "postSeedQuietMax", 0.85);
         _announcePhase("Owl B → seed mode");
         _c.sendCueAll("Movement 2 — Owl B seed");
-        <<< "movement 2: Owl B seed (slot", owlB, ") @ 8s" >>>;
-
-        2::second => now;
-        if(gen != _sceneGen) return;
-        _owlActivateSeed(owlA);
-        _owlMovementGain(owlA);
-        _announcePhase("Owl A → seed mode");
-        _c.sendCueAll("Movement 2 — Owl A seed");
-        <<< "movement 2: Owl A seed (slot", owlA, ") @ 10s" >>>;
+        <<< "movement 2: Owl B seed (slot", owlB, ") @ 18s" >>>;
     }
 
-    // Both owls develop at onset; Owl B seed @ 8s, Owl A seed @ 10s. Defaults: slots 7 & 5.
+    // Owl A develop @ onset → seed @ 10s; Owl B seed @ 18s. Defaults: slots 7 & 5.
     fun void applyMovement2(int owlA, int owlB)
     {
         if(owlA < 0) 7 => owlA;
@@ -413,12 +441,13 @@ public class ConductorScenes
         80::ms => now;
         endChaosOwls(owlA, owlB);
         120::ms => now;
-        _announcePhase("Owls develop (listen to you)");
-        _c.sendCueAll("Movement 2 — Owls develop");
+        _c.sendActivate(owlB, 0);
+        _c.sendPanic(owlB);
+        _announcePhase("Owl A develop (listen to you)");
+        _c.sendCueAll("Movement 2 — Owl A develop");
         _owlActivateDevelop(owlA);
-        _owlActivateDevelop(owlB);
         _resumeHumanMidi();
-        <<< "movement 2: Owls develop slots", owlA, owlB, "| B seed 8s, A seed 10s" >>>;
+        <<< "movement 2: Owl A develop slot", owlA, "→ seed 10s | Owl B seed @ 18s" >>>;
         spork ~ _movement2Timeline(gen, owlA, owlB);
     }
 

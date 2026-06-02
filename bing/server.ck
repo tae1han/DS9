@@ -349,9 +349,7 @@ fun void _toggleOwlSlotsMode()
     if(_owlToggleIsSeed) 0 => _owlToggleIsSeed;
     else 1 => _owlToggleIsSeed;
 
-    _owlToggleIsSeed $ float => float mode;
-    conductor.sendParam(OWL_SLOT_A, "owlMode", mode);
-    conductor.sendParam(OWL_SLOT_B, "owlMode", mode);
+    scenes.sendOwlToggleMode(_owlToggleIsSeed, OWL_SLOT_A, OWL_SLOT_B);
     if(_owlToggleIsSeed)
         <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
     else
