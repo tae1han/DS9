@@ -239,6 +239,7 @@ fun void _applyFirstNoteMute()
         conductor.sendActivate(i, 0);
         conductor.sendParam(i, "clearMemory", 1);
     }
+    scenes.endChaosOwls(OWL_SLOT_A, OWL_SLOT_B);
     <<< ">>> first MIDI — muted, feeder paused, all agents off, phrase memory cleared" >>>;
     <<< ">>> play solo on monitor; MIDI 29–35 = movements 2–8" >>>;
 }
