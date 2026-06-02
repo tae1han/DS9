@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+SLORK_BING="/Users/slork/slork/users/tae1han/bing"
+
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <slot 0-7>" >&2
   exit 1
@@ -19,7 +21,12 @@ while [ -L "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+if [[ -d "$SLORK_BING" ]]; then
+  PROJECT_DIR="$SLORK_BING"
+else
+  PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+fi
 
 command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
