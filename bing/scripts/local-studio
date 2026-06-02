@@ -28,7 +28,7 @@ for arg in "$@"; do
   fi
 done
 
-SERVER_CK="server.ck:local:${MIDI_DEV}:sim"
+SERVER_CK="server.ck:local:${MIDI_DEV}:sim:pad:midiLog"
 mkdir -p "$LOG_DIR"
 
 if ! command -v chuck >/dev/null 2>&1; then

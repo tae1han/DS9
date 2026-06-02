@@ -1,4 +1,5 @@
 @import "config.ck"
+@import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import {"bufferState.ck", "oscBufferState.ck", "agent.ck", "phraseMemory.ck"}
 @import {"instruments/sf2Util.ck", "instruments/roleTimbres.ck"}
@@ -320,6 +321,7 @@ fun void _routeHumanMidi()
         obs.midiQueueEvent => now;
         while(obs.mqPop(on, pitch, vel))
         {
+            if(SMIR.skipForPitchSet(pitch[0])) continue;
             // Flash only follows agent /ds9/pulse (this slot), not server-forwarded MIDI OSC.
             if(activeRole < 0) continue;
             if(!agents[activeRole].enabled || !agents[activeRole].shouldActivate()) continue;

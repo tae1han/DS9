@@ -1,6 +1,6 @@
 @import "config.ck"
-@import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
+@import "instruments/slorkPianoMonitorInst.ck"
 @import {"bufferState.ck"}
 @import {"conductor.ck"}
 @import {"conductorScenes.ck"}
@@ -33,6 +33,9 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
+28 => int MIDI_MON_OWL;       // match config.ck OWL_MIDI_TOGGLE
+29 => int MIDI_MON_MOV_LO;    // match config.ck MIDI_MOVEMENT_FIRST
+35 => int MIDI_MON_MOV_HI;    // match config.ck MIDI_MOVEMENT_LAST
 0 => int _owlToggleIsSeed;
 for(0 => int i; i < me.args(); i++)
 {
@@ -132,8 +135,14 @@ lpf.freq(7000);
 comp.limit();
 rev.mix(0.05);
 
+// ── Piano monitor (TimGM) ─────────────────────────────────────────────
+// ONLY audio path for your keyboard on the server machine:
+//   USB MIDI → bufferState.listen() → midi queue → _midiDispatch()
+//   → _monitorNoteOn/Off() → SlorkPianoMonitorInst (TimGM6mb.sf2) → master → DAC
+// There is no second midiPlayer / direct-MIDI-to-synth path in bing.
+// Reserved keys 28–35 must never call _monitorNoteOn (see _midiDispatch).
 int _monVoice[128];
-ezFluidInst @ monitorInst;
+SlorkPianoMonitorInst @ monitorInst;
 0 => int _monitorReady;
 0 => int _dacWired;
 
@@ -157,28 +166,58 @@ fun void _initMonitor()
     }
     f.close();
 
-    new ezFluidInst(MONITOR_SF2, 0) @=> monitorInst;
+    new SlorkPianoMonitorInst(MONITOR_SF2, 0) @=> monitorInst;
     monitorInst.numVoices(128);
     if(SIM_MONITOR) monitorInst.gain(4.5);
     else monitorInst.gain(10);
     monitorInst => master;
+
+    int monitorReserved[8];
+    MIDI_MON_OWL => monitorReserved[0];
+    MIDI_MON_MOV_LO => monitorReserved[1];
+    (MIDI_MON_MOV_LO + 1) => monitorReserved[2];
+    (MIDI_MON_MOV_LO + 2) => monitorReserved[3];
+    (MIDI_MON_MOV_LO + 3) => monitorReserved[4];
+    (MIDI_MON_MOV_LO + 4) => monitorReserved[5];
+    (MIDI_MON_MOV_LO + 5) => monitorReserved[6];
+    MIDI_MON_MOV_HI => monitorReserved[7];
+    monitorInst.setReservedPitches(monitorReserved);
+
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "v10 monitor: TimGM piano:", MONITOR_SF2 >>>;
+    <<< "v10 monitor: TimGM piano:", MONITOR_SF2,
+        "reserved MIDI:", monitorReserved.size() >>>;
 }
 
 fun int _midiSuppressMonitor(int pitch)
 {
-    return SMIR.skipForPitchSet(pitch);
+    if(monitorInst != null && _monitorReady)
+        return monitorInst.isReserved(pitch);
+    return 0;
 }
 
 fun void _logMidi(int on, int pitch, float vel)
 {
+    if(_midiSuppressMonitor(pitch))
+    {
+        if(on)
+        {
+            int owl;
+            int mov;
+            if(pitch == MIDI_MON_OWL) 1 => owl; else 0 => owl;
+            0 => mov;
+            if(pitch >= MIDI_MON_MOV_LO && pitch <= MIDI_MON_MOV_HI)
+                pitch - MIDI_MON_MOV_LO + 2 => mov;
+            <<< "MIDI reserved:", pitch, "vel", vel,
+                "owl:", owl, "mov:", mov, "→ no monitor" >>>;
+        }
+        else
+            <<< "MIDI reserved off:", pitch >>>;
+        return;
+    }
     if(!MIDI_LOG && !MONITOR_DEBUG) return;
     if(on)
-        <<< "MIDI in: noteOn pitch", pitch, "vel", vel,
-            "(owlToggle:", SMIR.isOwlToggleMidi(pitch), "movement:",
-            SMIR.movementFromMidi(pitch), ")" >>>;
+        <<< "MIDI in: noteOn pitch", pitch, "vel", vel >>>;
     else
         <<< "MIDI in: noteOff pitch", pitch >>>;
 }
@@ -203,7 +242,12 @@ fun void _monitorNoteOn(int pitch, float vel)
 {
     if(!MONITOR_USER_INPUT || !_monitorReady) return;
     if(pitch < 0 || pitch > 127) return;
-    if(_midiSuppressMonitor(pitch)) return;
+    if(_midiSuppressMonitor(pitch))
+    {
+        <<< "ERROR: _monitorNoteOn called for reserved pitch", pitch,
+            "— fix _midiDispatch" >>>;
+        return;
+    }
 
     ezNote n;
     n.pitch(pitch);
@@ -258,7 +302,8 @@ fun void _applyFirstNoteMute()
 
 fun void _triggerMovementFromMidi(int pitch)
 {
-    SMIR.movementFromMidi(pitch) => int mov;
+    if(pitch < MIDI_MON_MOV_LO || pitch > MIDI_MON_MOV_HI) return;
+    pitch - MIDI_MON_MOV_LO + 2 => int mov;
     if(mov < 2 || mov > 8) return;
     <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
@@ -283,7 +328,7 @@ fun void _midiDispatch()
         {
             _logMidi(on[0], pitch[0], vel[0]);
 
-            if(SMIR.isOwlToggleMidi(pitch[0]))
+            if(pitch[0] == MIDI_MON_OWL)
             {
                 if(on[0])
                 {
@@ -294,7 +339,7 @@ fun void _midiDispatch()
                 continue;
             }
 
-            if(SMIR.isMovementMidi(pitch[0]))
+            if(pitch[0] >= MIDI_MON_MOV_LO && pitch[0] <= MIDI_MON_MOV_HI)
             {
                 if(on[0]) _triggerMovementFromMidi(pitch[0]);
                 _monitorNoteOff(pitch[0]);

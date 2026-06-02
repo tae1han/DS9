@@ -44,10 +44,7 @@ public class oscBufferState extends bufferState
                     omsg.getFloat(1) => float velocity;
 
                     if(SMIR.skipForPitchSet(pitch))
-                    {
-                        _mqPush(1, pitch, velocity);
                         continue;
-                    }
 
                     // Start phrase on first note (don't rely on phraseStart OSC — it can arrive late).
                     if(!_inPhrase)
@@ -81,10 +78,7 @@ public class oscBufferState extends bufferState
                 {
                     omsg.getInt(0) => int pitch;
                     if(SMIR.skipForPitchSet(pitch))
-                    {
-                        _mqPush(0, pitch, 0.0);
                         continue;
-                    }
 
                     (now - recStart) / ms => float phrase_elapsed_ms;
                     60000.0 / refBpm => float ms_per_beat_local;

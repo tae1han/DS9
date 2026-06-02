@@ -11,6 +11,8 @@ while [ -L "$SOURCE" ]; do
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+LOG_DIR="$PROJECT_DIR/.local-logs"
+mkdir -p "$LOG_DIR"
 
 MIDI_DEV="USB Midi Cable"
 for arg in "$@"; do
@@ -36,8 +38,9 @@ done
 
 chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
-chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog" >/dev/null 2>&1 &
+chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
+echo "  server log: $LOG_DIR/server.log"
 sleep 1
 
 chuck "$PROJECT_DIR/studioConductor.ck"
