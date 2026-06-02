@@ -10,7 +10,7 @@
 #   - other keys           → TRACE MONITOR_PLAY + piano
 #
 # Server args: solo midiLog monitorTrace (no :pad :sim)
-# debug-server uses the same :solo server + adds :sim:pad for concert.
+# debug-server: same server args + sim:pad, server in foreground like this script.
 
 set -euo pipefail
 

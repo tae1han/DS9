@@ -1,5 +1,6 @@
 @import "config.ck"
 @import "SMIR.ck"
+@import "reservedMidi.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import "instruments/slorkPianoMonitorInst.ck"
 @import {"bufferState.ck"}
@@ -60,7 +61,7 @@ OscOut controlOut;
 
 fun int _isControlMidi(int pitch)
 {
-    return SMIR.skipForPitchSet(pitch);
+    return ReservedMidi.isControl(pitch);
 }
 
 fun void _oscForwardNoteOn(int pitch, float vel)
@@ -166,15 +167,24 @@ fun void _initMonitor()
     else monitorInst.gain(10);
     monitorInst => master;
 
-    int reserved[8];
-    28 => reserved[0];
-    for(1 => int i; i < 8; i++)
-        (29 + i - 1) => reserved[i];
-    monitorInst.setReservedPitches(reserved);
-
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "bing server build: reserved-midi-v3 | monitor ready | MIDI 28-35 no piano" >>>;
+    <<< "bing server build: reserved-midi-v4 | monitor ready | MIDI 28-35 SILENT" >>>;
+}
+
+fun void _monitorSilencePitch(int pitch)
+{
+    if(!_monitorReady || monitorInst == null) return;
+    if(pitch < 0 || pitch > 127) return;
+    monitorInst.silencePitch(pitch);
+    if(_monVoice[pitch] >= 0)
+    {
+        ezNote n;
+        n.pitch(pitch);
+        monitorInst.noteOff(n, _monVoice[pitch]);
+        monitorInst.release_voice(_monVoice[pitch]);
+        -1 => _monVoice[pitch];
+    }
 }
 
 fun void _monitorMidi(int on, int pitch, float vel)
@@ -229,8 +239,8 @@ fun void _applyFirstNoteMute()
 
 fun void _runMovement(int pitch)
 {
-    if(!SMIR.isMovementMidi(pitch)) return;
-    SMIR.movementFromMidi(pitch) => int mov;
+    if(pitch < 29 || pitch > 35) return;
+    pitch - 27 => int mov;
     if(mov < 2 || mov > 8) return;
     <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
@@ -263,11 +273,14 @@ fun void _controlMidiLoop()
             else <<< "CONTROL off", pitch >>>;
         }
 
+        if(on)
+            _monitorSilencePitch(pitch);
+
         if(MONITOR_TRACE)
             <<< "TRACE CONTROL pitch", pitch,
                 on ? "on" : "off", "(no monitor noteOn)" >>>;
 
-        if(SMIR.isOwlToggleMidi(pitch) && on)
+        if(pitch == 28 && on)
             spork ~ _toggleOwlSlotsMode();
         else if(on)
             spork ~ _runMovement(pitch);

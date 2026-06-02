@@ -1,6 +1,7 @@
 @import "smuck"
 @import "SMIR.ck"
 @import "config.ck"
+@import "reservedMidi.ck"
 
 public class bufferState
 {
@@ -200,7 +201,7 @@ public class bufferState
                     msg.data2 => int pitch;
                     msg.data3 => int velocity;
 
-                    if(SMIR.skipForPitchSet(pitch))
+                    if(ReservedMidi.isControl(pitch))
                     {
                         _controlEmit(1, pitch, velocity / 127.0);
                         continue;
@@ -242,7 +243,7 @@ public class bufferState
                          ((msg.data1 & 0xF0) == 0x90 && msg.data3 == 0))
                 {
                     msg.data2 => int pitch;
-                    if(SMIR.skipForPitchSet(pitch))
+                    if(ReservedMidi.isControl(pitch))
                     {
                         _controlEmit(0, pitch, 0.0);
                         continue;
