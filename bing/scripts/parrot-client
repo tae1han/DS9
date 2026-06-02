@@ -1,21 +1,14 @@
 #!/bin/bash
-# Usage (from DS9/v10-dev on station laptop N):
-#   ./scripts/parrot-client 1
-#   ./scripts/parrot-client 4
-
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "usage: $0 <station-number 1-8>" >&2
-  echo "  Example: $0 3   → client slot 2 (Albatross station in default layout)" >&2
+  echo "usage: $0 <slot 0-7>" >&2
   exit 1
 fi
 
-STATION="$1"
-SLOT=$((STATION - 1))
-
-if [[ "$SLOT" -lt 0 || "$SLOT" -gt 7 ]]; then
-  echo "station must be 1–8" >&2
+SLOT="$1"
+if [[ ! "$SLOT" =~ ^[0-7]$ ]]; then
+  echo "slot must be 0-7" >&2
   exit 1
 fi
 
@@ -28,13 +21,7 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if ! command -v chuck >/dev/null 2>&1; then
-  echo "chuck not found in PATH" >&2
-  exit 1
-fi
-
+command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
-
-echo "DS10 cluster CLIENT — station $STATION (slot $SLOT)"
 
 exec chuck -c8 "client.ck:${SLOT}:pkmn:flash" --bufsize:1024
