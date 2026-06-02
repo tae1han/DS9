@@ -46,6 +46,12 @@ public class ConductorScenes
         return _sceneGen;
     }
 
+    fun void acceptRemoteSceneAbort()
+    {
+        _bumpSceneGen();
+        <<< "scene: remote abort — staged sporks cancelled (gen", _sceneGen, ")" >>>;
+    }
+
     fun void _resetActiveOnSlot(int slot)
     {
         _c.sendParam(slot, "resetBaseline", 1);
@@ -317,26 +323,38 @@ public class ConductorScenes
         _clearOwlMemory(owlB);
     }
 
+    fun void sendOwlToggleModeSlot(int isSeed, int slot)
+    {
+        if(slot < 0 || slot >= _n) return;
+        _c.sendRole(slot, 7);
+        if(isSeed)
+        {
+            _owlSeedDefaults(slot);
+            _c.sendParam(slot, "owlMode", 1);
+        }
+        else
+        {
+            _owlDevelopDefaults(slot);
+            _c.sendParam(slot, "owlMode", 0);
+        }
+        _owlMovementGain(slot);
+    }
+
+    // owlB < 0 → only owlA (Low E toggle uses slot 7 only).
     fun void sendOwlToggleMode(int isSeed, int owlA, int owlB)
     {
-        int slots[2];
-        owlA => slots[0];
-        owlB => slots[1];
-        for(0 => int si; si < 2; si++)
-        {
-            slots[si] => int slot;
-            if(slot < 0 || slot >= _n) continue;
-            if(isSeed)
-            {
-                _owlSeedDefaults(slot);
-                _c.sendParam(slot, "owlMode", 1);
-            }
-            else
-            {
-                _owlDevelopDefaults(slot);
-                _c.sendParam(slot, "owlMode", 0);
-            }
-        }
+        sendOwlToggleModeSlot(isSeed, owlA);
+        if(owlB >= 0 && owlB != owlA)
+            sendOwlToggleModeSlot(isSeed, owlB);
+    }
+
+    fun void _owlSetDevelopMode(int slot)
+    {
+        _c.sendRole(slot, 7);
+        _owlDevelopDefaults(slot);
+        _owlMovementGain(slot);
+        _c.sendListenTarget(slot, -1);
+        _c.sendParam(slot, "owlMode", 0);
     }
 
     fun void _owlDevelopDefaults(int slot)
@@ -415,7 +433,14 @@ public class ConductorScenes
         <<< "movement 2: Owl A seed (slot", owlA, ") @ 10s" >>>;
 
         8::second => now;
-        if(gen != _sceneGen) return;
+        if(gen != _sceneGen)
+        {
+            <<< "movement 2: timeline aborted before Owl B (gen", gen, "!=", _sceneGen, ")" >>>;
+            return;
+        }
+        _c.sendActivate(owlB, 0);
+        _c.sendPanic(owlB);
+        80::ms => now;
         _owlActivateSeed(owlB);
         _owlMovementGain(owlB);
         _c.sendParam(owlB, "postSeedQuietMin", 0.15);
@@ -585,6 +610,7 @@ public class ConductorScenes
     {
         _activateSlot(slot, 4);
         _c.sendParam(slot, "glideMode", glideMode);
+        _c.sendParam(slot, "roleGain", 1.05);
         _c.sendListenTarget(slot, -1);
     }
 
@@ -607,7 +633,7 @@ public class ConductorScenes
         _c.sendParam(slot, "probability", 0.85);
     }
 
-    // Peacock + Swan listen to Parrots; Owls → Parrot develop; parakeets drop out.
+    // Peacock + Swan listen to Parrots; Owls stay develop; parakeets drop out.
     fun void applyMovement4(int peacockSlot, int peacockListen, int swanSlot, int swanListen)
     {
         _resumeHumanMidi();
@@ -624,10 +650,10 @@ public class ConductorScenes
         _announceMovement("MOVEMENT 4 (Peacock + Swan)");
         _c.sendFeederPause(1);
         80::ms => now;
-        _announcePhase("Owls → Parrot develop; Peacock & Swan → Parrots");
+        _announcePhase("Owls develop; Peacock & Swan → Parrots");
         _c.sendCueAll("Movement 4 — Owls develop, Peacock & Swan listen to Parrots");
-        _parrotDevelopOnSlot(owlA, -1);
-        _parrotDevelopOnSlot(owlB, -1);
+        _owlSetDevelopMode(owlA);
+        _owlSetDevelopMode(owlB);
         _c.sendPanic(parakeetA);
         _c.sendActivate(parakeetA, 0);
         _c.sendPanic(parakeetB);
@@ -636,7 +662,7 @@ public class ConductorScenes
         _c.sendListenTarget(peacockSlot, peacockListen);
         _swanOnSlot(swanSlot);
         _c.sendListenTarget(swanSlot, swanListen);
-        <<< "movement 4: Owls", owlA, owlB, "→ Parrot develop | parakeets off",
+        <<< "movement 4: Owls", owlA, owlB, "develop | parakeets off",
             "| Peacock", peacockSlot, "→ Parrot", peacockListen,
             "| Swan", swanSlot, "→ Parrot", swanListen >>>;
     }
@@ -648,20 +674,25 @@ public class ConductorScenes
         _activateSlot(slot, 5);
     }
 
-    // Emu + Albatross layer; Parrot develop on 5 & 7 unchanged from M4.
+    // Emu + Albatross layer; Owls on 5 & 7 stay develop from M4.
     fun void applyMovement5()
     {
+        7 => int owlA;
+        5 => int owlB;
+
         _resumeHumanMidi();
         _bumpSceneGen();
         _announceMovement("MOVEMENT 5 (Emu + Albatross)");
         _c.sendFeederPause(1);
         80::ms => now;
         _c.sendCueAll("Movement 5 — Emu bass/glide, Albatross drones");
+        _owlSetDevelopMode(owlA);
+        _owlSetDevelopMode(owlB);
         _emuOnSlot(0, 1);
         _emuOnSlot(1, 0);
         _albatrossOnSlot(3);
         _albatrossOnSlot(4);
-        <<< "movement 5: Emu 0 glide, 1 bassline | Albatross 3, 4 | Parrot develop 5, 7 unchanged" >>>;
+        <<< "movement 5: Emu 0 glide, 1 bassline | Albatross 3, 4 | Owls", owlA, owlB, "develop" >>>;
     }
 
     // All stations Falcon, listening to you.

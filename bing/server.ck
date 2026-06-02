@@ -240,6 +240,7 @@ fun void _applyFirstNoteMute()
         conductor.sendParam(i, "clearMemory", 1);
     }
     scenes.endChaosOwls(OWL_SLOT_A, OWL_SLOT_B);
+    conductor.sendSceneAbort();
     <<< ">>> first MIDI — muted, feeder paused, all agents off, phrase memory cleared" >>>;
     <<< ">>> play solo on monitor; MIDI 29–35 = movements 2–8" >>>;
 }
@@ -251,6 +252,7 @@ fun void _runMovement(int pitch)
     if(mov < 2 || mov > 8) return;
     <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
     _resumeClientMidi();
+    conductor.sendSceneAbort();
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
     else if(mov == 3) scenes.applyMovement3(OWL_SLOT_A, OWL_SLOT_B, 0, 4, 1, 3);
     else if(mov == 4) scenes.applyMovement4(6, 0, 2, 4);
@@ -349,11 +351,11 @@ fun void _toggleOwlSlotsMode()
     if(_owlToggleIsSeed) 0 => _owlToggleIsSeed;
     else 1 => _owlToggleIsSeed;
 
-    scenes.sendOwlToggleMode(_owlToggleIsSeed, OWL_SLOT_A, OWL_SLOT_B);
+    scenes.sendOwlToggleMode(_owlToggleIsSeed, OWL_SLOT_A, -1);
     if(_owlToggleIsSeed)
-        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
+        <<< "owl toggle: slot", OWL_SLOT_A, "→ SEED" >>>;
     else
-        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
+        <<< "owl toggle: slot", OWL_SLOT_A, "→ DEVELOP" >>>;
 }
 
 fun void _serverLinkHeartbeat()

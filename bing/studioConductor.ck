@@ -379,6 +379,23 @@ fun void _pulseListen()
 spork ~ _statusListen();
 spork ~ _pulseListen();
 
+9113 => int SERVER_CTL_PORT;
+OscIn serverCtlIn;
+OscMsg serverCtlMsg;
+serverCtlIn.port(SERVER_CTL_PORT);
+serverCtlIn.addAddress("/ds9/control/sceneAbort");
+
+fun void _sceneAbortListen()
+{
+    while(true)
+    {
+        serverCtlIn => now;
+        while(serverCtlIn.recv(serverCtlMsg))
+            scenes.acceptRemoteSceneAbort();
+    }
+}
+spork ~ _sceneAbortListen();
+
 cond.sendFeederPause(1);
 cond.sendMidiForward(1);
 

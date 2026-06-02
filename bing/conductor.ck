@@ -128,4 +128,12 @@ public class Conductor
         _out.send();
     }
 
+    // Cancel staged sporks in studioConductor / other processes (separate ConductorScenes).
+    fun void sendSceneAbort()
+    {
+        _out.dest(_addr, _serverCtlPort);
+        _out.start("/ds9/control/sceneAbort");
+        _out.send();
+    }
+
 }
