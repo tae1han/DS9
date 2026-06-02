@@ -172,21 +172,22 @@ fun void _initMonitor()
     else monitorInst.gain(10);
     monitorInst => master;
 
+    // Monitor may see MIDI one octave above control keys — mute +12 for Fluid only.
     int monitorReserved[8];
-    MIDI_MON_OWL => monitorReserved[0];
-    MIDI_MON_MOV_LO => monitorReserved[1];
-    (MIDI_MON_MOV_LO + 1) => monitorReserved[2];
-    (MIDI_MON_MOV_LO + 2) => monitorReserved[3];
-    (MIDI_MON_MOV_LO + 3) => monitorReserved[4];
-    (MIDI_MON_MOV_LO + 4) => monitorReserved[5];
-    (MIDI_MON_MOV_LO + 5) => monitorReserved[6];
-    MIDI_MON_MOV_HI => monitorReserved[7];
+    (MIDI_MON_OWL + 12) => monitorReserved[0];
+    (MIDI_MON_MOV_LO + 12) => monitorReserved[1];
+    (MIDI_MON_MOV_LO + 1 + 12) => monitorReserved[2];
+    (MIDI_MON_MOV_LO + 2 + 12) => monitorReserved[3];
+    (MIDI_MON_MOV_LO + 3 + 12) => monitorReserved[4];
+    (MIDI_MON_MOV_LO + 4 + 12) => monitorReserved[5];
+    (MIDI_MON_MOV_LO + 5 + 12) => monitorReserved[6];
+    (MIDI_MON_MOV_HI + 12) => monitorReserved[7];
     monitorInst.setReservedPitches(monitorReserved);
 
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
     <<< "v10 monitor: TimGM piano:", MONITOR_SF2,
-        "reserved MIDI:", monitorReserved.size() >>>;
+        "reserved MIDI (+12):", monitorReserved[0], "…", monitorReserved[7] >>>;
 }
 
 fun int _midiSuppressMonitor(int pitch)
