@@ -16,6 +16,8 @@ true => int MONITOR_USER_INPUT;
 9000 => int CLIENT_OSC_PORT;
 8889 => int SERVER_STATUS_PORT;
 8891 => int SERVER_PULSE_PORT;
+8892 => int SERVER_LINK_PORT;
+8893 => int SERVER_LINK_REPLY_PORT;
 9100 => int CLIENT_CONTROL_PORT_BASE;
 
 me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
@@ -304,6 +306,32 @@ fun void _toggleOwlSlotsMode()
         <<< "MIDI 28: Owls slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
 }
 
+fun void _serverLinkHeartbeat()
+{
+    while(true)
+    {
+        250::ms => now;
+        xmit.dest(MULTICAST_ADDR, SERVER_LINK_PORT);
+        xmit.start("/ds9/link/ping");
+        xmit.send();
+    }
+}
+
+fun void _serverLinkListen()
+{
+    OscIn linkIn;
+    OscMsg linkMsg;
+    linkIn.port(SERVER_LINK_REPLY_PORT);
+    linkIn.addAddress("/ds9/link/pong");
+
+    while(true)
+    {
+        linkIn => now;
+        while(linkIn.recv(linkMsg))
+            linkMsg.getInt(0) => int slot; // slot ack (optional log)
+    }
+}
+
 9113 => int SERVER_CTL_PORT;
 OscIn serverCtl;
 OscMsg serverCtlMsg;
@@ -326,6 +354,8 @@ fun void _serverCtlListen()
 }
 
 spork ~ _serverCtlListen();
+spork ~ _serverLinkHeartbeat();
+spork ~ _serverLinkListen();
 spork ~ _midiDispatch();
 
 // Clients start inactive; in sim/studio skip this — it races the ChuGL conductor.
@@ -352,7 +382,8 @@ else
         <<< "v10 server — :pad: first MIDI note mutes ensemble" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
-    <<< "v10 server — MIDI", OWL_MIDI_TOGGLE, "toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop" >>>;
+    <<< "v10 server — MIDI", OWL_MIDI_TOGGLE, "toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop (silent monitor)" >>>;
+    <<< "v10 server — link ping port", SERVER_LINK_PORT, "pong", SERVER_LINK_REPLY_PORT >>>;
 }
 
 while(true) 50::ms => now;

@@ -16,7 +16,10 @@
 8889 => int SERVER_STATUS_PORT;
 9100 => int CLIENT_CONTROL_PORT_BASE;
 8891 => int SERVER_PULSE_PORT;
+8892 => int SERVER_LINK_PORT;
+8893 => int SERVER_LINK_REPLY_PORT;
 9200 => int AGENT_BUS_PORT_BASE;
+2.0 => float LINK_TIMEOUT_SEC;
 "224.0.0.1" => string MULTICAST_ADDR;
 
 if(me.args() < 1) { <<< "usage: chuck client.ck:<0-7>[:local][:headless][:sim][:flash][:pkmn]" >>>; me.exit(); }
@@ -130,6 +133,59 @@ for(0 => int r; r < 8; r++)
 }
 
 ClientFlash @ flash;
+0 => int _linkConnected;
+time _linkDeadline;
+
+fun void _updateFlashRoleTint()
+{
+    if(flash == null) return;
+    if(activeRole >= 0) flash.setRoleTint(activeRole);
+    else if(pendingRole >= 0) flash.setRoleTint(pendingRole);
+    else flash.setRoleTint(myIndex);
+}
+
+fun void _serverLinkBus()
+{
+    OscIn linkIn;
+    OscMsg linkMsg;
+    OscOut linkOut;
+    linkIn.port(SERVER_LINK_PORT);
+    linkIn.addAddress("/ds9/link/ping");
+    linkOut.dest(MULTICAST_ADDR, SERVER_LINK_REPLY_PORT);
+
+    while(true)
+    {
+        linkIn => now;
+        while(linkIn.recv(linkMsg))
+        {
+            now + LINK_TIMEOUT_SEC::second => _linkDeadline;
+            if(!_linkConnected)
+            {
+                1 => _linkConnected;
+                if(flash != null) flash.setLinked(1);
+                <<< "v10 client", myIndex, "linked to server" >>>;
+            }
+            linkOut.start("/ds9/link/pong");
+            myIndex => linkOut.add;
+            linkOut.send();
+        }
+    }
+}
+
+fun void _linkWatchdog()
+{
+    while(true)
+    {
+        200::ms => now;
+        if(_linkConnected && now > _linkDeadline)
+        {
+            0 => _linkConnected;
+            if(flash != null) flash.setLinked(0);
+            <<< "v10 client", myIndex, "server link lost" >>>;
+        }
+    }
+}
+
 if(USE_FLASH)
 {
     ClientFlash f(myIndex) --> GG.scene();
@@ -140,7 +196,10 @@ if(USE_FLASH)
     GG.bloomPass().intensity(1.5);
     GG.fullscreen();
     @(0, 0, 14) => GG.camera().pos;
-    <<< "v10 client", myIndex, "fullscreen flash on" >>>;
+    flash.setLinked(0);
+    <<< "v10 client", myIndex, "fullscreen flash (white until server link)" >>>;
+    spork ~ _serverLinkBus();
+    spork ~ _linkWatchdog();
 }
 
 fun void _pickTimbre(int role, int idx)
@@ -242,6 +301,7 @@ fun void _activate(int role)
         insts[role] =< master;
     agents[role].setInstrument(insts[role]);
     agents[role].enable();
+    _updateFlashRoleTint();
 }
 
 spork ~ obs.oscListen();
@@ -382,6 +442,7 @@ fun void _control()
             else if(controlMsg.address == "/ds9/control/setRole")
             {
                 controlMsg.getInt(1) => pendingRole;
+                _updateFlashRoleTint();
             }
             else if(controlMsg.address == "/ds9/control/setListenTarget")
             {
