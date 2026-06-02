@@ -169,7 +169,7 @@ fun void _initMonitor()
 
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "bing server build: reserved-midi-v4 | monitor ready | MIDI 28-35 SILENT" >>>;
+    <<< "bing server build: reserved-midi-v5 | monitor ready | MIDI 28-35 SILENT" >>>;
 }
 
 fun void _monitorSilencePitch(int pitch)
@@ -219,6 +219,12 @@ fun void _monitorMidi(int on, int pitch, float vel)
 
 _initMonitor();
 
+fun void _resumeClientMidi()
+{
+    0 => _ensembleMuted;
+    conductor.sendMidiForward(1);
+}
+
 fun void _applyFirstNoteMute()
 {
     if(_firstNoteMuted) return;
@@ -243,6 +249,7 @@ fun void _runMovement(int pitch)
     pitch - 27 => int mov;
     if(mov < 2 || mov > 8) return;
     <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
+    _resumeClientMidi();
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
     else if(mov == 3) scenes.applyMovement3(OWL_SLOT_A, OWL_SLOT_B, 0, 4, 1, 3);
     else if(mov == 4) scenes.applyMovement4(6, 0, 2, 4);

@@ -28,8 +28,8 @@ for arg in "$@"; do
   [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
 done
 
-# Identical to solo-monitor-test, plus concert sim/pad.
-SERVER_ARGS="${MIDI_DEV}:solo:sim:pad:midiLog:monitorTrace"
+# Concert server (NOT :solo — clients need link ping + midiForward OSC in).
+SERVER_ARGS="${MIDI_DEV}:sim:pad:midiLog:monitorTrace"
 
 cleanup() {
   pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
@@ -49,7 +49,7 @@ for f in server.ck studioConductor.ck autonomousFeeder.ck; do
 done
 
 echo ""
-echo "debug-server (server FOREGROUND — same as solo-monitor-test)"
+echo "debug-server (server foreground; link + midi forward enabled)"
 echo "  dir:  $PROJECT_DIR"
 echo "  MIDI: $MIDI_DEV"
 echo "  log:  $LOG_DIR/server.log (tee)"
