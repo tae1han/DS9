@@ -1,6 +1,7 @@
 @import "smuck"
 @import "SMIR.ck"
 @import "bufferState.ck"
+@import "config.ck"
 
 // client-side bufferState that receives note data from server via OSC instead of local MIDI. phrase boundary
 // detection is handled by the server -- client listen for the events and reconstruct buffers locally.
@@ -42,6 +43,12 @@ public class oscBufferState extends bufferState
                     omsg.getInt(0) => int pitch;
                     omsg.getFloat(1) => float velocity;
 
+                    if(excludeFromPitchSet(pitch))
+                    {
+                        _mqPush(1, pitch, velocity);
+                        continue;
+                    }
+
                     // Start phrase on first note (don't rely on phraseStart OSC — it can arrive late).
                     if(!_inPhrase)
                     {
@@ -64,7 +71,7 @@ public class oscBufferState extends bufferState
                     phraseBuffer.add(phraseNote);
                     phraseBuffer.notes().size() - 1 => _oscNoteIndex[pitch];
                     rollingBuffer.add(rollingNote);
-                    rollingSmir.set(rollingBuffer.notes());
+                    rollingSmir.setFiltered(rollingBuffer.notes());
 
                     now => _lastNoteTime;
                     rollingNote @=> _lastNote;
@@ -73,6 +80,11 @@ public class oscBufferState extends bufferState
                 else if(omsg.address == "/ds9/noteOff")
                 {
                     omsg.getInt(0) => int pitch;
+                    if(excludeFromPitchSet(pitch))
+                    {
+                        _mqPush(0, pitch, 0.0);
+                        continue;
+                    }
 
                     (now - recStart) / ms => float phrase_elapsed_ms;
                     60000.0 / refBpm => float ms_per_beat_local;

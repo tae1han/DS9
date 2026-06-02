@@ -143,6 +143,7 @@ public class Owl extends Agent
         {
             rollNotes[i].pitch() $ int => int p;
             if(p < 0 || p > 127) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ((p % 12) + 12) % 12 => int pc;
             if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
         }
@@ -151,6 +152,7 @@ public class Owl extends Agent
         {
             doneNotes[i].pitch() $ int => int p;
             if(p < 0 || p > 127) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ((p % 12) + 12) % 12 => int pc;
             if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
         }
@@ -161,6 +163,7 @@ public class Owl extends Agent
             {
                 liveNotes[i].pitch() $ int => int p;
                 if(p < 0 || p > 127) continue;
+                if(SMIR.skipForPitchSet(p)) continue;
                 ((p % 12) + 12) % 12 => int pc;
                 if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
             }
@@ -239,7 +242,9 @@ public class Owl extends Agent
         for(0 => int i; i < 12; i++) 0 => mask[i];
         for(0 => int i; i < recalled.size(); i++)
         {
-            ((recalled[i].pitch() $ int) % 12 + 12) % 12 => int pc;
+            recalled[i].pitch() $ int => int p;
+            if(SMIR.skipForPitchSet(p)) continue;
+            ((p % 12) + 12) % 12 => int pc;
             1 => mask[pc];
         }
         if(source != null)
@@ -247,7 +252,9 @@ public class Owl extends Agent
             source.completedPhrase.notes() @=> ezNote done[];
             for(0 => int i; i < done.size(); i++)
             {
-                ((done[i].pitch() $ int) % 12 + 12) % 12 => int pc;
+                done[i].pitch() $ int => int p;
+                if(SMIR.skipForPitchSet(p)) continue;
+                ((p % 12) + 12) % 12 => int pc;
                 1 => mask[pc];
             }
         }

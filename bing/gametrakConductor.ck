@@ -7,7 +7,7 @@
 // First MIDI → mute (server :pad, only after pedal 1)
 // Pedals 2–8 → movements 2–8; pedal 9 → solo
 
-@import "ds10Config.ck"
+@import "config.ck"
 @import "conductor.ck"
 @import "conductorScenes.ck"
 

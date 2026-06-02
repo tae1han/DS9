@@ -1,4 +1,4 @@
-@import "ds10Config.ck"
+@import "config.ck"
 @import "conductor.ck"
 @import "roleBaselines.ck"
 @import "roleGains.ck"

@@ -1,5 +1,6 @@
 @import "smuck"
 @import "SMIR.ck"
+@import "config.ck"
 
 public class bufferState
 {
@@ -95,9 +96,9 @@ public class bufferState
     {
         for(0 => int p; p < 128; p++)
             0 => _pedalPendingOff[p];
-        phraseSmir.set(phraseBuffer.notes());
-        completedSmir.set(completedPhrase.notes());
-        rollingSmir.set(rollingBuffer.notes());
+        phraseSmir.setFiltered(phraseBuffer.notes());
+        completedSmir.setFiltered(completedPhrase.notes());
+        rollingSmir.setFiltered(rollingBuffer.notes());
     }
 
     // IMPORTANT: deep-copy phraseBuffer into completedPhrase so agents
@@ -109,12 +110,14 @@ public class bufferState
         // <<< "snapshot:", src.size(), "notes" >>>;
         for(int i; i < src.size(); i++)
         {
+            src[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
             ezNote n(src[i].onset(), src[i].beats(), src[i].pitch(), src[i].velocity());
             completedPhrase.add(n);
         }
         completedPhrase.notes() @=> ezNote snap[];
         SMIR.finalizePhraseDurations(snap, 0.12, 0.5);
-        completedSmir.set(completedPhrase.notes());
+        completedSmir.setFiltered(completedPhrase.notes());
     }
 
     fun void device(int d)
@@ -167,6 +170,12 @@ public class bufferState
                     msg.data2 => int pitch;
                     msg.data3 => int velocity;
 
+                    if(pitch == OWL_MIDI_TOGGLE)
+                    {
+                        _mqPush(1, pitch, velocity / 127.0);
+                        continue;
+                    }
+
                     0 => _pedalPendingOff[pitch];
 
                     // first note after a gap = phrase start
@@ -191,7 +200,7 @@ public class bufferState
                     phraseBuffer.add(phraseNote);
                     phraseBuffer.notes().size() - 1 => phrase_note_index[pitch];
                     rollingBuffer.add(rollingNote);
-                    rollingSmir.set(rollingBuffer.notes());
+                    rollingSmir.setFiltered(rollingBuffer.notes());
 
                     now => _lastNoteTime;
                     rollingNote @=> _lastNote;
@@ -202,6 +211,11 @@ public class bufferState
                 else if (msg.data1 == 128 || (msg.data1 == 144 && msg.data3 == 0))
                 {
                     msg.data2 => int pitch;
+                    if(pitch == OWL_MIDI_TOGGLE)
+                    {
+                        _mqPush(0, pitch, 0.0);
+                        continue;
+                    }
                     if(_pedalDown)
                         1 => _pedalPendingOff[pitch];
                     else
@@ -281,6 +295,8 @@ public class bufferState
             ezNote kept[0];
             for (int i; i < current.size(); i++)
             {
+                current[i].pitch() $ int => int p;
+                if(excludeFromPitchSet(p)) continue;
                 if (current[i].onset() >= cutoff_beats)
                     kept << current[i];
             }
@@ -290,7 +306,7 @@ public class bufferState
                 rollingBuffer.notes().clear();
                 for (int i; i < kept.size(); i++)
                     rollingBuffer.add(kept[i]);
-                rollingSmir.set(rollingBuffer.notes());
+                rollingSmir.setFiltered(rollingBuffer.notes());
                 // <<< "reaped rolling buffer:", current.size(), "->", kept.size() >>>;
             }
         }

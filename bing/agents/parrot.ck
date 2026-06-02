@@ -80,6 +80,7 @@ public class Parrot extends Agent
         {
             rollNotes[i].pitch() $ int => int p;
             if(p < 0 || p > 127) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ((p % 12) + 12) % 12 => int pc;
             if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
         }
@@ -89,6 +90,7 @@ public class Parrot extends Agent
         {
             doneNotes[i].pitch() $ int => int p;
             if(p < 0 || p > 127) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ((p % 12) + 12) % 12 => int pc;
             if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
         }
@@ -100,6 +102,7 @@ public class Parrot extends Agent
             {
                 liveNotes[i].pitch() $ int => int p;
                 if(p < 0 || p > 127) continue;
+                if(SMIR.skipForPitchSet(p)) continue;
                 ((p % 12) + 12) % 12 => int pc;
                 if(!mask[pc]) { 1 => mask[pc]; 1 => any; }
             }

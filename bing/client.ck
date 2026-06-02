@@ -1,4 +1,4 @@
-@import "ds10Config.ck"
+@import "config.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import {"bufferState.ck", "oscBufferState.ck", "agent.ck", "phraseMemory.ck"}
 @import {"instruments/sf2Util.ck", "instruments/roleTimbres.ck"}

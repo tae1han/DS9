@@ -1,4 +1,5 @@
 @import "smuck"
+@import "config.ck"
 
 public class SMIR
 {
@@ -14,6 +15,28 @@ public class SMIR
     fun void set(ezNote n[])
     {
         n @=> notes;
+    }
+
+    fun static int skipForPitchSet(int pitch)
+    {
+        return excludeFromPitchSet(pitch);
+    }
+
+    fun static ezNote[] filterControlPitches(ezNote n[])
+    {
+        if(n == null) return n;
+        ezNote out[0];
+        for(int i; i < n.size(); i++)
+        {
+            n[i].pitch() $ int => int p;
+            if(!excludeFromPitchSet(p)) out << n[i];
+        }
+        return out;
+    }
+
+    fun void setFiltered(ezNote n[])
+    {
+        set(filterControlPitches(n));
     }
 
     // Phrase-complete often fires on silence before the last note-off (sustain).
@@ -82,7 +105,9 @@ public class SMIR
     {
         Math.FLOAT_MAX => float min;
         for (int i; i < n.size(); i++) {
-            n[i].pitch() => float pitch;
+            n[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
+            p => float pitch;
             if (pitch < min) {
                 pitch => min;
             }
@@ -100,7 +125,9 @@ public class SMIR
     {
         -Math.FLOAT_MAX => float max;
         for (int i; i < n.size(); i++) {
-            n[i].pitch() => float pitch;
+            n[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
+            p => float pitch;
             if (pitch > max) {
                 pitch => max;
             }
@@ -133,7 +160,9 @@ public class SMIR
         float closestPitch;
 
         for (int i; i < n.size(); i++) {
-            n[i].pitch() => float pitch;
+            n[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
+            p => float pitch;
             Math.fabs(pitch - center) => float diff;
             if (diff < minDiff) {
                 diff => minDiff;
@@ -154,6 +183,7 @@ public class SMIR
         int set[128];
         for (int i; i < n.size(); i++) {
             n[i].pitch() $ int => int pitch;
+            if(excludeFromPitchSet(pitch)) continue;
             set[pitch]++;
         }
         return set;
@@ -171,6 +201,7 @@ public class SMIR
         for(int i; i < n.size(); i++)
         {
             n[i].pitch() $ int => int pitch;
+            if(excludeFromPitchSet(pitch)) continue;
             n[i].beats() +=> weightedSet[pitch];
         }
         return weightedSet;
@@ -276,20 +307,27 @@ public class SMIR
             return variance;
         }
 
+        int count;
         for(int i; i < n.size(); i++)
         {
-            n[i].pitch() => float pitch;
+            n[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
+            p => float pitch;
             pitch +=> sum;
+            count++;
         }
-        sum / n.size() => float mean;
+        if(count <= 0) return variance;
+        sum / count => float mean;
 
         for(int i; i < n.size(); i++)
         {
-            n[i].pitch() => float pitch;
+            n[i].pitch() $ int => int p;
+            if(excludeFromPitchSet(p)) continue;
+            p => float pitch;
             (pitch - mean) * (pitch - mean) +=> variance;
         }
 
-        return variance / n.size();
+        return variance / count;
     }
 
     fun float pitchVariance()

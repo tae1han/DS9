@@ -98,9 +98,9 @@ public class ClientFlash extends GGen
             return;
         }
 
-        // Slight role tint on white flash.
-        0.72 => float w;
-        0.28 => float t;
+        // Role tint on white flash (stronger than before).
+        0.58 => float w;
+        0.42 => float t;
         v * w + _tintR * v * t => float r;
         v * w + _tintG * v * t => float g;
         v * w + _tintB * v * t => float b;

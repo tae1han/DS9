@@ -144,6 +144,7 @@ public class Albatross extends Agent
         {
             notes[i].pitch() $ int => int p;
             if(p < 0 || p > 127) continue;
+            if(SMIR.skipForPitchSet(p)) continue;
             ((p % 12) + 12) % 12 => int pc;
             1.0 +=> w[pc];
             if(!active[pc]) { 1 => active[pc]; numPCs++; }

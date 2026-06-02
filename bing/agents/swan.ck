@@ -114,6 +114,7 @@ public class Swan extends Agent
         for(0 => int i; i < notes.size(); i++)
         {
             notes[i].pitch() $ int => int p;
+            if(SMIR.skipForPitchSet(p)) continue;
             if(p >= pitchLow && p <= pitchHigh) 1 => present[p];
         }
         return SMIR.orderedMidiInRange(present, pitchLow, pitchHigh);
@@ -133,6 +134,7 @@ public class Swan extends Agent
             for(0 => int i; i < done.size(); i++)
             {
                 done[i].pitch() $ int => int p;
+                if(SMIR.skipForPitchSet(p)) continue;
                 if(p >= pitchLow && p <= pitchHigh) 1 => present[p];
             }
             if(listenTarget < 0)
@@ -141,6 +143,7 @@ public class Swan extends Agent
                 for(0 => int i; i < roll.size(); i++)
                 {
                     roll[i].pitch() $ int => int p;
+                    if(SMIR.skipForPitchSet(p)) continue;
                     if(p >= pitchLow && p <= pitchHigh) 1 => present[p];
                 }
             }

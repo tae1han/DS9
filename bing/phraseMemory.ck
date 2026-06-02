@@ -22,9 +22,12 @@ public class PhraseMemory
         ezNote snap[0];
         for(int i; i < notes.size(); i++)
         {
+            notes[i].pitch() $ int => int p;
+            if(SMIR.skipForPitchSet(p)) continue;
             ezNote n(notes[i].onset(), notes[i].beats(), notes[i].pitch(), notes[i].velocity());
             snap << n;
         }
+        if(snap.size() == 0) return;
         SMIR.finalizePhraseDurations(snap, 0.12, 0.35);
         _buf[idx].set(snap);
         _head + 1 => _head;

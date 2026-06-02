@@ -2,7 +2,7 @@
 // Usage: chuck studioConductor.ck[:local]
 //   Run via ./scripts/local-studio or ./scripts/studio-gui
 
-@import "ds10Config.ck"
+@import "config.ck"
 @import "conductor.ck"
 @import "conductorScenes.ck"
 @import "roleGains.ck"

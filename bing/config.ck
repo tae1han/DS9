@@ -1,4 +1,4 @@
-// Shared DS10 constants (OSC paths still use /ds9/ prefix for wire compatibility).
+// Shared bing constants (OSC paths still use /ds9/ prefix for wire compatibility).
 8 => int NUM_AGENT_SLOTS;
 
 // Role indices (station can assume any role via conductor)
@@ -10,6 +10,14 @@
 5 => int ROLE_FALCON;
 6 => int ROLE_SWAN;
 7 => int ROLE_OWL;
+
+// Low E on 88-key piano — server-only control (no monitor / phrase / pitchset).
+28 => int OWL_MIDI_TOGGLE;
+
+fun int excludeFromPitchSet(int pitch)
+{
+    return pitch == OWL_MIDI_TOGGLE;
+}
 
 ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
 

@@ -1,4 +1,4 @@
-@import "ds10Config.ck"
+@import "config.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import {"bufferState.ck"}
 @import {"conductor.ck"}
@@ -29,7 +29,6 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 0 => int _firstNoteMuted;
 0 => int _ensembleMuted;
 
-28 => int OWL_MIDI_TOGGLE;
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
 0 => int _owlToggleIsSeed;
@@ -54,7 +53,7 @@ OscOut controlOut;
 
 fun void _oscForwardNoteOn(int pitch, float vel)
 {
-    if(_ensembleMuted) return;
+    if(_ensembleMuted || _midiSuppressMonitor(pitch)) return;
     for(int slot; slot < NUM_AGENT_SLOTS; slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
@@ -67,7 +66,7 @@ fun void _oscForwardNoteOn(int pitch, float vel)
 
 fun void _oscForwardNoteOff(int pitch)
 {
-    if(_ensembleMuted) return;
+    if(_ensembleMuted || _midiSuppressMonitor(pitch)) return;
     for(int slot; slot < NUM_AGENT_SLOTS; slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
@@ -165,10 +164,16 @@ fun void _initMonitor()
     <<< "v10 monitor: TimGM piano:", MONITOR_SF2 >>>;
 }
 
+fun int _midiSuppressMonitor(int pitch)
+{
+    return pitch == OWL_MIDI_TOGGLE;
+}
+
 fun void _monitorNoteOff(int pitch)
 {
     if(!_monitorReady || monitorInst == null) return;
     if(pitch < 0 || pitch > 127) return;
+    if(_midiSuppressMonitor(pitch)) return;
     ezNote n;
     n.pitch(pitch);
     n.velocity(0.5);
@@ -184,6 +189,7 @@ fun void _monitorNoteOn(int pitch, float vel)
 {
     if(!MONITOR_USER_INPUT || !_monitorReady) return;
     if(pitch < 0 || pitch > 127) return;
+    if(_midiSuppressMonitor(pitch)) return;
 
     ezNote n;
     n.pitch(pitch);
@@ -244,7 +250,12 @@ fun void _midiDispatch()
         {
             if(pitch[0] == OWL_MIDI_TOGGLE)
             {
-                if(on[0]) _toggleOwlSlotsMode();
+                if(on[0])
+                {
+                    _monitorNoteOff(pitch[0]);
+                    _toggleOwlSlotsMode();
+                }
+                else _monitorNoteOff(pitch[0]);
                 continue;
             }
 
