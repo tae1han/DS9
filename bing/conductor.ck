@@ -136,4 +136,13 @@ public class Conductor
         _out.send();
     }
 
+    // Run movement 2–8 in studioConductor (same code path as GUI buttons).
+    fun void sendRunMovement(int mov)
+    {
+        _out.dest(_addr, _serverCtlPort);
+        _out.start("/ds9/control/runMovement");
+        mov => _out.add;
+        _out.send();
+    }
+
 }

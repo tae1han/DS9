@@ -12,6 +12,9 @@ public class ConductorScenes
     int _n;
     int _sceneGen;
     string _currentMovement;
+    2.0 => float _owlRoleGain;
+    1.15 => float _parakeetRoleGain;
+    0.9 => float _emuRoleGain;
 
     fun ConductorScenes(Conductor @ c, int numSlots)
     {
@@ -287,12 +290,12 @@ public class ConductorScenes
 
     fun void _owlMovementGain(int slot)
     {
-        _c.sendParam(slot, "roleGain", 2.0);
+        _c.sendParam(slot, "roleGain", _owlRoleGain);
     }
 
     fun void _parakeetMovementGain(int slot)
     {
-        _c.sendParam(slot, "roleGain", 0.8);
+        _c.sendParam(slot, "roleGain", _parakeetRoleGain);
     }
 
     fun void _clearOwlMemory(int slot)
@@ -348,15 +351,6 @@ public class ConductorScenes
             sendOwlToggleModeSlot(isSeed, owlB);
     }
 
-    fun void _owlSetDevelopMode(int slot)
-    {
-        _c.sendRole(slot, 7);
-        _owlDevelopDefaults(slot);
-        _owlMovementGain(slot);
-        _c.sendListenTarget(slot, -1);
-        _c.sendParam(slot, "owlMode", 0);
-    }
-
     fun void _owlDevelopDefaults(int slot)
     {
         _c.sendParam(slot, "owlMode", 0);
@@ -410,10 +404,10 @@ public class ConductorScenes
         _c.sendActivate(slot, 1);
     }
 
-    fun void _owlActivateDevelop(int slot)
+    fun void _owlActivateDevelop(int slot, int clearMem)
     {
         _c.sendRole(slot, 7);
-        _clearOwlMemory(slot);
+        if(clearMem) _clearOwlMemory(slot);
         _owlDevelopDefaults(slot);
         _owlMovementGain(slot);
         _c.sendListenTarget(slot, -1);
@@ -470,7 +464,7 @@ public class ConductorScenes
         _c.sendPanic(owlB);
         _announcePhase("Owl A develop (listen to you)");
         _c.sendCueAll("Movement 2 — Owl A develop");
-        _owlActivateDevelop(owlA);
+        _owlActivateDevelop(owlA, 1);
         _resumeHumanMidi();
         <<< "movement 2: Owl A develop slot", owlA, "→ seed 10s | Owl B seed @ 18s" >>>;
         spork ~ _movement2Timeline(gen, owlA, owlB);
@@ -564,6 +558,8 @@ public class ConductorScenes
         _parakeetMovementGain(parakeetA);
         _parakeetHarmonizeOnSlot(parakeetB, owlA);
         _parakeetMovementGain(parakeetB);
+        _c.sendParam(parakeetA, "roleGain", _parakeetRoleGain);
+        _c.sendParam(parakeetB, "roleGain", _parakeetRoleGain);
         _c.sendCueAll("Movement 3 — Parakeets harmonize Owls");
         <<< "movement 3: Parakeets harmonize Owls (", parakeetA, "→", owlB, ",",
             parakeetB, "→", owlA, ")" >>>;
@@ -595,6 +591,10 @@ public class ConductorScenes
             }
         }
         150::ms => now;
+        _owlDevelopDefaults(owlA);
+        _owlDevelopDefaults(owlB);
+        _c.sendParam(owlA, "owlMode", 0);
+        _c.sendParam(owlB, "owlMode", 0);
         _owlMovementGain(owlA);
         _owlMovementGain(owlB);
         _announcePhase("Parrots echo Owls");
@@ -610,7 +610,7 @@ public class ConductorScenes
     {
         _activateSlot(slot, 4);
         _c.sendParam(slot, "glideMode", glideMode);
-        _c.sendParam(slot, "roleGain", 1.05);
+        _c.sendParam(slot, "roleGain", _emuRoleGain);
         _c.sendListenTarget(slot, -1);
     }
 
@@ -652,8 +652,8 @@ public class ConductorScenes
         80::ms => now;
         _announcePhase("Owls develop; Peacock & Swan → Parrots");
         _c.sendCueAll("Movement 4 — Owls develop, Peacock & Swan listen to Parrots");
-        _owlSetDevelopMode(owlA);
-        _owlSetDevelopMode(owlB);
+        _owlActivateDevelop(owlA, 0);
+        _owlActivateDevelop(owlB, 0);
         _c.sendPanic(parakeetA);
         _c.sendActivate(parakeetA, 0);
         _c.sendPanic(parakeetB);
@@ -686,8 +686,8 @@ public class ConductorScenes
         _c.sendFeederPause(1);
         80::ms => now;
         _c.sendCueAll("Movement 5 — Emu bass/glide, Albatross drones");
-        _owlSetDevelopMode(owlA);
-        _owlSetDevelopMode(owlB);
+        _owlActivateDevelop(owlA, 0);
+        _owlActivateDevelop(owlB, 0);
         _emuOnSlot(0, 1);
         _emuOnSlot(1, 0);
         _albatrossOnSlot(3);

@@ -29,6 +29,8 @@ Conductor cond(controlOut, MULTICAST_ADDR, NUM_SLOTS);
 ConductorScenes scenes(cond, NUM_SLOTS);
 RoleGains roleGains;
 0 => int _movement2Busy;
+0 => int _movementFromServerBusy;
+time _movementDebounceUntil;
 
 UI_Bool slotActive[8];
 UI_Int slotRole[8];
@@ -102,6 +104,24 @@ fun void _triggerMovement2()
     1 => _movement2Busy;
     scenes.applyMovement2(7, 5);
     0 => _movement2Busy;
+}
+
+fun void _runMovementFromServer(int mov)
+{
+    if(mov < 2 || mov > 8) return;
+    if(_movementFromServerBusy) return;
+    if(now < _movementDebounceUntil) return;
+    now + 0.4::second => _movementDebounceUntil;
+
+    1 => _movementFromServerBusy;
+    if(mov == 2) _triggerMovement2();
+    else if(mov == 3) scenes.applyMovement3(7, 5, 0, 4, 1, 3);
+    else if(mov == 4) scenes.applyMovement4(6, 0, 2, 4);
+    else if(mov == 5) scenes.applyMovement5();
+    else if(mov == 6) scenes.applyMovement6();
+    else if(mov == 7) scenes.applyMovement7();
+    else if(mov == 8) scenes.applyMovement8();
+    0 => _movementFromServerBusy;
 }
 
 fun void _sendModeParam(int s)
@@ -384,23 +404,33 @@ OscIn serverCtlIn;
 OscMsg serverCtlMsg;
 serverCtlIn.port(SERVER_CTL_PORT);
 serverCtlIn.addAddress("/ds9/control/sceneAbort");
+serverCtlIn.addAddress("/ds9/control/runMovement");
 
-fun void _sceneAbortListen()
+fun void _serverCtlFromServer()
 {
     while(true)
     {
         serverCtlIn => now;
         while(serverCtlIn.recv(serverCtlMsg))
-            scenes.acceptRemoteSceneAbort();
+        {
+            if(serverCtlMsg.address == "/ds9/control/sceneAbort")
+                scenes.acceptRemoteSceneAbort();
+            else if(serverCtlMsg.address == "/ds9/control/runMovement")
+            {
+                serverCtlMsg.getInt(0) => int mov;
+                <<< "studio: movement", mov, "from server MIDI" >>>;
+                _runMovementFromServer(mov);
+            }
+        }
     }
 }
-spork ~ _sceneAbortListen();
+spork ~ _serverCtlFromServer();
 
 cond.sendFeederPause(1);
 cond.sendMidiForward(1);
 
 <<< "DS10 Studio conductor ready — OSC to", MULTICAST_ADDR >>>;
-<<< "  Movements + per-slot controls in ChuGL windows" >>>;
+<<< "  Movements 2–8: GUI buttons OR server MIDI 29–35 (runMovement OSC)" >>>;
 <<< "  Pulse grid reacts to agent notes on /ds9/pulse" >>>;
 
 while(true)

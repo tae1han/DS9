@@ -54,7 +54,7 @@ echo "  dir:  $PROJECT_DIR"
 echo "  MIDI: $MIDI_DEV"
 echo "  log:  $LOG_DIR/server.log (tee)"
 echo ""
-echo "Keys 28-35: CONTROL only, no piano. Other keys: TRACE MONITOR_PLAY"
+echo "Keys 28-35: movements (via studioConductor). 28=owl toggle. Other keys: piano"
 echo "Ctrl+C stops everything"
 echo ""
 

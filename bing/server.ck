@@ -37,6 +37,7 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
 0 => int _owlToggleIsSeed;
+1 => int MOVEMENTS_VIA_STUDIO;
 for(0 => int i; i < me.args(); i++)
 {
     me.arg(i) => string a;
@@ -47,6 +48,7 @@ for(0 => int i; i < me.args(); i++)
     else if(a == "midiLog") 1 => MIDI_LOG;
     else if(a == "monitorTrace") 1 => MONITOR_TRACE;
     else if(a == "solo") 1 => SOLO_MONITOR;
+    else if(a == "serverMovements") 0 => MOVEMENTS_VIA_STUDIO;
     else a => MIDI_DEVICE;
 }
 
@@ -245,14 +247,8 @@ fun void _applyFirstNoteMute()
     <<< ">>> play solo on monitor; MIDI 29–35 = movements 2–8" >>>;
 }
 
-fun void _runMovement(int pitch)
+fun void _runMovementLocal(int mov)
 {
-    if(pitch < 29 || pitch > 35) return;
-    pitch - 27 => int mov;
-    if(mov < 2 || mov > 8) return;
-    <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
-    _resumeClientMidi();
-    conductor.sendSceneAbort();
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
     else if(mov == 3) scenes.applyMovement3(OWL_SLOT_A, OWL_SLOT_B, 0, 4, 1, 3);
     else if(mov == 4) scenes.applyMovement4(6, 0, 2, 4);
@@ -260,6 +256,25 @@ fun void _runMovement(int pitch)
     else if(mov == 6) scenes.applyMovement6();
     else if(mov == 7) scenes.applyMovement7();
     else if(mov == 8) scenes.applyMovement8();
+}
+
+fun void _runMovement(int pitch)
+{
+    if(pitch < 29 || pitch > 35) return;
+    pitch - 27 => int mov;
+    if(mov < 2 || mov > 8) return;
+    _resumeClientMidi();
+    conductor.sendSceneAbort();
+    if(MOVEMENTS_VIA_STUDIO)
+    {
+        <<< "MIDI movement trigger: key", pitch, "→ movement", mov, "(studio)" >>>;
+        conductor.sendRunMovement(mov);
+    }
+    else
+    {
+        <<< "MIDI movement trigger: key", pitch, "→ movement", mov, "(server)" >>>;
+        _runMovementLocal(mov);
+    }
 }
 
 fun void _runFirstNoteMute(int pitch, float vel)
@@ -293,7 +308,7 @@ fun void _controlMidiLoop()
         if(pitch == 28 && on)
             spork ~ _toggleOwlSlotsMode();
         else if(on)
-            spork ~ _runMovement(pitch);
+            _runMovement(pitch);
     }
 }
 
@@ -455,7 +470,10 @@ else
         <<< "v10 server — :pad: first MIDI = mute, deactivate, clear owl memory" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
-    <<< "bing server — MIDI 28 owl | 29-35 movements | :midiLog" >>>;
+    if(MOVEMENTS_VIA_STUDIO)
+        <<< "bing server — MIDI 28 owl | 29-35 → studio (need studioConductor)" >>>;
+    else
+        <<< "bing server — MIDI 28 owl | 29-35 movements on server (:serverMovements)" >>>;
     <<< "v10 server — link ping port", SERVER_LINK_PORT, "pong", SERVER_LINK_REPLY_PORT >>>;
 }
 
