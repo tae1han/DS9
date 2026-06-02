@@ -2,6 +2,8 @@
 imgui.ini
 .DS_Store
 *.wav
+*.md
+*.txt
 # old versions and loose files
 v1/
 v2/
