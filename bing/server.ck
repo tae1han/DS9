@@ -1,6 +1,6 @@
 @import "config.ck"
+@import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
-@import "instruments/slorkPianoMonitorInst.ck"
 @import {"bufferState.ck"}
 @import {"conductor.ck"}
 @import {"conductorScenes.ck"}
@@ -25,6 +25,8 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 
 0 => int AUTO_SCORE;
 0 => int MIDI_LOG;
+0 => int MONITOR_TRACE;
+0 => int SOLO_MONITOR;
 0 => int SIM_MONITOR;
 0 => int FIRST_NOTE_MUTE;
 0 => int _firstNoteMuted;
@@ -32,9 +34,6 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
-28 => int MIDI_MON_OWL;       // match config.ck OWL_MIDI_TOGGLE
-29 => int MIDI_MON_MOV_LO;    // match config.ck MIDI_MOVEMENT_FIRST
-35 => int MIDI_MON_MOV_HI;    // match config.ck MIDI_MOVEMENT_LAST
 0 => int _owlToggleIsSeed;
 for(0 => int i; i < me.args(); i++)
 {
@@ -44,6 +43,8 @@ for(0 => int i; i < me.args(); i++)
     else if(a == "sim") 1 => SIM_MONITOR;
     else if(a == "pad" || a == "firstNoteMute") 1 => FIRST_NOTE_MUTE;
     else if(a == "midiLog") 1 => MIDI_LOG;
+    else if(a == "monitorTrace") 1 => MONITOR_TRACE;
+    else if(a == "solo") 1 => SOLO_MONITOR;
     else a => MIDI_DEVICE;
 }
 
@@ -57,9 +58,7 @@ OscOut controlOut;
 
 fun int _isControlMidi(int pitch)
 {
-    if(pitch == MIDI_MON_OWL) return 1;
-    if(pitch >= MIDI_MON_MOV_LO && pitch <= MIDI_MON_MOV_HI) return 1;
-    return 0;
+    return SMIR.skipForPitchSet(pitch);
 }
 
 fun void _oscForwardNoteOn(int pitch, float vel)
@@ -139,12 +138,12 @@ else master.gain(0.8);
 lpf.freq(7000);
 comp.limit();
 rev.mix(0.05);
-for(int i; i < dac.channels(); i++)
+for(0 => int i; i < dac.channels(); i++)
     rev => dac.chan(i);
 
-// TimGM piano monitor: SlorkPianoMonitorInst => master => dac (no extra MIDI paths).
+// TimGM piano: ezFluidInst => master => dac. Control MIDI 28–35 never calls _monitorMidi.
+ezFluidInst @ monitorInst;
 int _monVoice[128];
-SlorkPianoMonitorInst @ monitorInst;
 0 => int _monitorReady;
 
 fun void _initMonitor()
@@ -154,30 +153,25 @@ fun void _initMonitor()
     FileIO f;
     if(!f.open(MONITOR_SF2, FileIO.READ))
     {
-        <<< "v10 monitor: soundfont not found:", MONITOR_SF2 >>>;
+        <<< "bing monitor: soundfont not found:", MONITOR_SF2 >>>;
         me.exit();
     }
     f.close();
 
-    new SlorkPianoMonitorInst(MONITOR_SF2, 0) @=> monitorInst;
+    new ezFluidInst(MONITOR_SF2, 0) @=> monitorInst;
     monitorInst.numVoices(128);
     if(SIM_MONITOR) monitorInst.gain(4.5);
     else monitorInst.gain(10);
     monitorInst => master;
 
-    int reserved[8];
-    MIDI_MON_OWL => reserved[0];
-    for(1 => int i; i < 8; i++)
-        (MIDI_MON_MOV_LO + i - 1) => reserved[i];
-    monitorInst.setReservedPitches(reserved);
-
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
     1 => _monitorReady;
-    <<< "v10 monitor:", MONITOR_SF2, "reserved MIDI 28–35" >>>;
+    <<< "bing monitor ready — control MIDI 28-35 (no piano)" >>>;
 }
 
 fun void _monitorMidi(int on, int pitch, float vel)
 {
+    if(_isControlMidi(pitch)) return;
     if(!MONITOR_USER_INPUT || !_monitorReady || monitorInst == null) return;
     if(pitch < 0 || pitch > 127) return;
 
@@ -192,6 +186,8 @@ fun void _monitorMidi(int on, int pitch, float vel)
         monitorInst.allocate_voice(n) => int v;
         if(v < 0) return;
         v => _monVoice[pitch];
+        if(MONITOR_TRACE)
+            <<< "TRACE MONITOR_PLAY pitch", pitch, "vel", vel >>>;
         monitorInst.noteOn(n, v);
     }
     else
@@ -223,10 +219,10 @@ fun void _applyFirstNoteMute()
     <<< ">>> play solo on monitor; MIDI 29–35 = movements 2–8" >>>;
 }
 
-fun void _triggerMovementFromMidi(int pitch)
+fun void _runMovement(int pitch)
 {
-    if(pitch < MIDI_MON_MOV_LO || pitch > MIDI_MON_MOV_HI) return;
-    pitch - MIDI_MON_MOV_LO + 2 => int mov;
+    if(!SMIR.isMovementMidi(pitch)) return;
+    SMIR.movementFromMidi(pitch) => int mov;
     if(mov < 2 || mov > 8) return;
     <<< "MIDI movement trigger: key", pitch, "→ movement", mov >>>;
     if(mov == 2) scenes.applyMovement2(OWL_SLOT_A, OWL_SLOT_B);
@@ -236,6 +232,38 @@ fun void _triggerMovementFromMidi(int pitch)
     else if(mov == 6) scenes.applyMovement6();
     else if(mov == 7) scenes.applyMovement7();
     else if(mov == 8) scenes.applyMovement8();
+}
+
+fun void _runFirstNoteMute(int pitch, float vel)
+{
+    _applyFirstNoteMute();
+    _monitorMidi(1, pitch, vel);
+}
+
+fun void _controlMidiLoop()
+{
+    while(true)
+    {
+        bs.controlMidiEvent => now;
+        bs.ctlOn => int on;
+        bs.ctlPitch => int pitch;
+        bs.ctlVel => float vel;
+
+        if(MIDI_LOG)
+        {
+            if(on) <<< "MIDI", pitch, vel >>>;
+            else <<< "MIDI off", pitch >>>;
+        }
+
+        if(MONITOR_TRACE)
+            <<< "TRACE CONTROL pitch", pitch,
+                on ? "on" : "off", "(no monitor noteOn)" >>>;
+
+        if(SMIR.isOwlToggleMidi(pitch) && on)
+            spork ~ _toggleOwlSlotsMode();
+        else if(on)
+            spork ~ _runMovement(pitch);
+    }
 }
 
 fun void _midiDispatch()
@@ -255,19 +283,9 @@ fun void _midiDispatch()
                 else <<< "MIDI off", pitch[0] >>>;
             }
 
-            if(_isControlMidi(pitch[0]))
-            {
-                if(pitch[0] == MIDI_MON_OWL && on[0])
-                    _toggleOwlSlotsMode();
-                else if(on[0])
-                    _triggerMovementFromMidi(pitch[0]);
-                continue;
-            }
-
             if(FIRST_NOTE_MUTE && !_firstNoteMuted && on[0])
             {
-                _applyFirstNoteMute();
-                _monitorMidi(1, pitch[0], vel[0]);
+                spork ~ _runFirstNoteMute(pitch[0], vel[0]);
                 continue;
             }
 
@@ -287,18 +305,7 @@ fun void _midiDispatch()
     }
 }
 
-spork ~ bs.listen();
-spork ~ bs.silenceWatcher();
-spork ~ bs.rollingReaper();
-
-spork ~ _forwardPhraseStart();
-spork ~ _forwardPhraseComplete();
-spork ~ _forwardSilence();
-
 <<< "v10 server OSC:", MULTICAST_ADDR, "slots:", NUM_AGENT_SLOTS >>>;
-
-Conductor conductor(controlOut, MULTICAST_ADDR, NUM_AGENT_SLOTS);
-ConductorScenes scenes(conductor, NUM_AGENT_SLOTS);
 
 fun void _toggleOwlSlotsMode()
 {
@@ -309,9 +316,9 @@ fun void _toggleOwlSlotsMode()
     conductor.sendParam(OWL_SLOT_A, "owlMode", mode);
     conductor.sendParam(OWL_SLOT_B, "owlMode", mode);
     if(_owlToggleIsSeed)
-        <<< "MIDI 28: Owls slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
+        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
     else
-        <<< "MIDI 28: Owls slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
+        <<< "owl toggle: slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
 }
 
 fun void _serverLinkHeartbeat()
@@ -341,13 +348,14 @@ fun void _serverLinkListen()
 }
 
 9113 => int SERVER_CTL_PORT;
-OscIn serverCtl;
-OscMsg serverCtlMsg;
-serverCtl.port(SERVER_CTL_PORT);
-serverCtl.addAddress("/ds9/control/midiForward");
 
 fun void _serverCtlListen()
 {
+    OscIn serverCtl;
+    OscMsg serverCtlMsg;
+    serverCtl.port(SERVER_CTL_PORT);
+    serverCtl.addAddress("/ds9/control/midiForward");
+
     while(true)
     {
         serverCtl => now;
@@ -361,10 +369,24 @@ fun void _serverCtlListen()
     }
 }
 
-spork ~ _serverCtlListen();
-spork ~ _serverLinkHeartbeat();
-spork ~ _serverLinkListen();
+Conductor conductor(controlOut, MULTICAST_ADDR, NUM_AGENT_SLOTS);
+ConductorScenes scenes(conductor, NUM_AGENT_SLOTS);
+
+spork ~ bs.listen();
+spork ~ bs.silenceWatcher();
+spork ~ bs.rollingReaper();
+spork ~ _forwardPhraseStart();
+spork ~ _forwardPhraseComplete();
+spork ~ _forwardSilence();
+spork ~ _controlMidiLoop();
 spork ~ _midiDispatch();
+
+if(!SOLO_MONITOR)
+{
+    spork ~ _serverCtlListen();
+    spork ~ _serverLinkHeartbeat();
+    spork ~ _serverLinkListen();
+}
 
 // Clients start inactive; in sim/studio skip this — it races the ChuGL conductor.
 if(!SIM_MONITOR)
@@ -384,13 +406,19 @@ fun void _scoreEntry()
 
 if(AUTO_SCORE)
     spork ~ _scoreEntry();
+else if(SOLO_MONITOR)
+{
+    <<< "bing SOLO — piano monitor only (no OSC listeners)" >>>;
+    if(MONITOR_TRACE)
+        <<< "  press 28-35: TRACE CONTROL | other keys: TRACE MONITOR_PLAY" >>>;
+}
 else
 {
     if(FIRST_NOTE_MUTE)
         <<< "v10 server — :pad: first MIDI = mute, deactivate, clear owl memory" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
-    <<< "v10 server — MIDI 28 owl toggle | 29–35 movements 2–8 | :midiLog for pitch debug" >>>;
+    <<< "bing server — MIDI 28 owl | 29-35 movements | :midiLog" >>>;
     <<< "v10 server — link ping port", SERVER_LINK_PORT, "pong", SERVER_LINK_REPLY_PORT >>>;
 }
 

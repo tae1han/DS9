@@ -32,6 +32,11 @@ public class bufferState
     Event noteOffEvent;
     Event silenceSustainedEvent;
     Event midiQueueEvent;
+    Event controlMidiEvent;
+
+    int ctlOn;
+    int ctlPitch;
+    float ctlVel;
 
     512 => int _MIDI_Q_MAX;
     int _mqIsOn[512];
@@ -84,6 +89,14 @@ public class bufferState
     }
 
     fun int mqPending() { return _mqCount; }
+
+    fun void _controlEmit(int isOn, int pitch, float vel)
+    {
+        isOn => ctlOn;
+        pitch => ctlPitch;
+        vel => ctlVel;
+        controlMidiEvent.broadcast();
+    }
 
     fun void _emitNoteOff(int pitch, float phrase_elapsed_ms, float phrase_note_on_time[], int phrase_note_index[], float ms_per_beat)
     {
@@ -175,15 +188,15 @@ public class bufferState
                 (now - recStart) / ms => float phrase_elapsed_ms;
                 (now - absStart) / ms => float abs_elapsed_ms;
 
-                // Note-On
-                if (msg.data1 == 144 && msg.data3 > 0)
+                // Note-On (any MIDI channel)
+                if ((msg.data1 & 0xF0) == 0x90 && msg.data3 > 0)
                 {
                     msg.data2 => int pitch;
                     msg.data3 => int velocity;
 
                     if(SMIR.skipForPitchSet(pitch))
                     {
-                        _mqPush(1, pitch, velocity / 127.0);
+                        _controlEmit(1, pitch, velocity / 127.0);
                         continue;
                     }
 
@@ -218,13 +231,14 @@ public class bufferState
                     _mqPush(1, pitch, velocity / 127.0);
                     // <<< "noteOn:", pitch, velocity >>>;
                 }
-                // Note-Off
-                else if (msg.data1 == 128 || (msg.data1 == 144 && msg.data3 == 0))
+                // Note-Off (any MIDI channel)
+                else if ((msg.data1 & 0xF0) == 0x80 ||
+                         ((msg.data1 & 0xF0) == 0x90 && msg.data3 == 0))
                 {
                     msg.data2 => int pitch;
                     if(SMIR.skipForPitchSet(pitch))
                     {
-                        _mqPush(0, pitch, 0.0);
+                        _controlEmit(0, pitch, 0.0);
                         continue;
                     }
                     if(_pedalDown)

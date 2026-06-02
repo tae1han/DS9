@@ -1,0 +1,55 @@
+#!/bin/bash
+# Server-only piano monitor test — no clients, feeder, or conductor GUI.
+#
+# Usage (from DS9/bing):
+#   ./scripts/solo-monitor-test
+#   ./scripts/solo-monitor-test "Your MIDI Device Name"
+#
+# Plug in MIDI first, then run. Press:
+#   - MIDI 28–35 (control) → terminal should show TRACE CONTROL only (no piano)
+#   - other keys           → TRACE MONITOR_PLAY + piano
+#
+# Args: midiLog + monitorTrace (no :pad :sim :score)
+
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+MIDI_DEV="USB Midi Cable"
+for arg in "$@"; do
+  MIDI_DEV="$arg"
+done
+
+if ! command -v chuck >/dev/null 2>&1; then
+  echo "chuck not found in PATH" >&2
+  exit 1
+fi
+
+if pgrep -f "chuck.*$PROJECT_DIR/" >/dev/null 2>&1; then
+  echo "Stopping existing Chuck processes in $PROJECT_DIR..."
+  pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
+  sleep 1
+fi
+
+cd "$PROJECT_DIR"
+
+if [[ ! -f "$PROJECT_DIR/data/TimGM6mb.sf2" ]]; then
+  echo "WARN: missing data/TimGM6mb.sf2 — copy soundfont into bing/data/" >&2
+fi
+
+echo "Solo monitor test — server only"
+echo "  MIDI device: $MIDI_DEV"
+echo "  Chuck args:  solo midiLog monitorTrace (no OSC in, no clients)"
+echo ""
+echo "List MIDI devices: chuck --probe  (see MidiIn section)"
+echo "Ctrl+C to stop"
+echo ""
+
+exec chuck "server.ck:${MIDI_DEV}:solo:midiLog:monitorTrace"
