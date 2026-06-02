@@ -285,9 +285,15 @@ public class ConductorScenes
         _c.sendParam(slot, "roleGain", 0.8);
     }
 
-    fun void _owlEchoDefaults(int slot)
+    fun void _clearOwlMemory(int slot)
+    {
+        _c.sendParam(slot, "clearMemory", 1);
+    }
+
+    fun void _owlDevelopDefaults(int slot)
     {
         _c.sendParam(slot, "owlMode", 0);
+        _c.sendParam(slot, "developTechnique", -1);
         _c.sendParam(slot, "quantizeRecall", 0);
         _c.sendParam(slot, "seedProb", 0.5);
         _c.sendParam(slot, "postSeedQuietMin", 0.5);
@@ -336,10 +342,10 @@ public class ConductorScenes
         _c.sendActivate(slot, 1);
     }
 
-    fun void _owlActivateEcho(int slot)
+    fun void _owlActivateDevelop(int slot)
     {
         _c.sendRole(slot, 7);
-        _owlEchoDefaults(slot);
+        _owlDevelopDefaults(slot);
         _owlMovementGain(slot);
         _c.sendListenTarget(slot, -1);
         _c.sendActivate(slot, 0);
@@ -368,7 +374,7 @@ public class ConductorScenes
         <<< "movement 2: Owl B seed (slot", owlB, ")" >>>;
     }
 
-    // Owl A echo → seed @ 10s; Owl B seed @ 18s. Defaults: slots 7 & 5.
+    // Owl A develop → seed @ 10s; Owl B seed @ 18s. Defaults: slots 7 & 5.
     fun void applyMovement2(int owlA, int owlB)
     {
         if(owlA < 0) 7 => owlA;
@@ -382,17 +388,19 @@ public class ConductorScenes
         _announceMovement("MOVEMENT 2 (Owls)");
         _silenceEnsemble();
         80::ms => now;
-        _announcePhase("Owl A echo (listen to you)");
-        _c.sendCueAll("Movement 2 — Owl A echo");
+        _clearOwlMemory(owlA);
+        _clearOwlMemory(owlB);
+        _announcePhase("Owl A develop (listen to you)");
+        _c.sendCueAll("Movement 2 — Owl A develop");
         _c.sendRole(owlA, 7);
-        _owlEchoDefaults(owlA);
+        _owlDevelopDefaults(owlA);
         _owlMovementGain(owlA);
         _c.sendListenTarget(owlA, -1);
         _c.sendActivate(owlA, 0);
         80::ms => now;
         _c.sendActivate(owlA, 1);
         _resumeHumanMidi();
-        <<< "movement 2: Owl A echo slot", owlA, "→ seed 10s | Owl B seed +8s" >>>;
+        <<< "movement 2: Owl A develop slot", owlA, "→ seed 10s | Owl B seed +8s" >>>;
         spork ~ _movement2Timeline(gen, owlA, owlB);
     }
 

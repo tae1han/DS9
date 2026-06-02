@@ -49,6 +49,13 @@ public class PhraseMemory
         return out;
     }
 
+    fun void clear()
+    {
+        0 => _count;
+        0 => _head;
+        -1 => _lastRecallWhich;
+    }
+
     fun int count() { return _count; }
     fun int lastRecallWhich() { return _lastRecallWhich; }
 }

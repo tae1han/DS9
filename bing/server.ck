@@ -26,6 +26,11 @@ me.dir() + "data/TimGM6mb.sf2" => string MONITOR_SF2;
 0 => int FIRST_NOTE_MUTE;
 0 => int _firstNoteMuted;
 0 => int _ensembleMuted;
+
+28 => int OWL_MIDI_TOGGLE;
+5 => int OWL_SLOT_B;
+7 => int OWL_SLOT_A;
+0 => int _owlToggleIsSeed;
 for(0 => int i; i < me.args(); i++)
 {
     me.arg(i) => string a;
@@ -235,6 +240,12 @@ fun void _midiDispatch()
         bs.midiQueueEvent => now;
         while(bs.mqPop(on, pitch, vel))
         {
+            if(pitch[0] == OWL_MIDI_TOGGLE)
+            {
+                if(on[0]) _toggleOwlSlotsMode();
+                continue;
+            }
+
             if(FIRST_NOTE_MUTE && !_firstNoteMuted && on[0])
             {
                 _monitorNoteOn(pitch[0], vel[0]);
@@ -278,6 +289,20 @@ _wireDac();
 
 Conductor conductor(controlOut, MULTICAST_ADDR, NUM_AGENT_SLOTS);
 ConductorScenes scenes(conductor, NUM_AGENT_SLOTS);
+
+fun void _toggleOwlSlotsMode()
+{
+    if(_owlToggleIsSeed) 0 => _owlToggleIsSeed;
+    else 1 => _owlToggleIsSeed;
+
+    _owlToggleIsSeed $ float => float mode;
+    conductor.sendParam(OWL_SLOT_A, "owlMode", mode);
+    conductor.sendParam(OWL_SLOT_B, "owlMode", mode);
+    if(_owlToggleIsSeed)
+        <<< "MIDI 28: Owls slots", OWL_SLOT_A, OWL_SLOT_B, "→ SEED" >>>;
+    else
+        <<< "MIDI 28: Owls slots", OWL_SLOT_A, OWL_SLOT_B, "→ DEVELOP" >>>;
+}
 
 9113 => int SERVER_CTL_PORT;
 OscIn serverCtl;
@@ -327,6 +352,7 @@ else
         <<< "v10 server — :pad: first MIDI note mutes ensemble" >>>;
     else
         <<< "v10 server — pass :score or :pad" >>>;
+    <<< "v10 server — MIDI", OWL_MIDI_TOGGLE, "toggles Owls slots", OWL_SLOT_A, "/", OWL_SLOT_B, "seed/develop" >>>;
 }
 
 while(true) 50::ms => now;

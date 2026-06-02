@@ -46,7 +46,7 @@ UI_Bool midiForward(1);
 ["Echo", "Develop"] @=> string PARROT_MODES[];
 ["Mirror", "Harmonize"] @=> string PARAKEET_MODES[];
 ["Bassline", "Glide"] @=> string EMU_MODES[];
-["Echo", "Seed"] @=> string OWL_MODES[];
+["Develop", "Seed"] @=> string OWL_MODES[];
 
 for(0 => int s; s < NUM_SLOTS; s++)
 {
