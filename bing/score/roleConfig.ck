@@ -9,10 +9,10 @@ public class RoleConfig
     fun float performanceGain(int role)
     {
         if(role == 0) return 1.28;
-        if(role == 1) return 2.0;
+        if(role == 1) return 2.2;
         if(role == 2) return 1.4;
         if(role == 3) return 1.5;
-        if(role == 4) return 1.3;
+        if(role == 4) return 0.85;
         if(role == 5) return 2.1;
         if(role == 6) return 2.2;
         if(role == 7) return 0.8;
@@ -26,7 +26,7 @@ public class RoleConfig
         if(slot == 1) return 2.0;
         if(slot == 2) return 0.95;
         if(slot == 3) return 1.2;
-        if(slot == 4) return 1.1;
+        if(slot == 4) return 0.6;
         if(slot == 5) return 2.0;
         if(slot == 6) return 1.3;
         if(slot == 7) return 0.8;

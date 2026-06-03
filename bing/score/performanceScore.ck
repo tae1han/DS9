@@ -323,7 +323,7 @@ public class PerformanceScore
     {
         8::second => now;
         if(gen != _gen) return;
-        _owlSeed(OwlSlots.b(), 0.8, -1);
+        _owlSeed(OwlSlots.b(), 1.4, -1);
         <<< "2A: Owl slot", OwlSlots.b(), "seed @ 8s" >>>;
     }
 
@@ -335,7 +335,7 @@ public class PerformanceScore
         _c.sendMidiForward(1);
         _c.deactivateAll();
         80::ms => now;
-        _owlSeed(OwlSlots.a(), 0.8, -1);
+        _owlSeed(OwlSlots.a(), 1.4, -1);
         spork ~ _timeline2A(gen);
     }
 
@@ -368,8 +368,8 @@ public class PerformanceScore
     {
         8::second => now;
         if(gen != _gen) return;
-        _emuGlide(1, 1.0, OwlSlots.b());
-        _emuBass(3, 1.0, OwlSlots.a());
+        _emuGlide(1, 0.8, OwlSlots.b());
+        _emuBass(3, 0.6, OwlSlots.a());
         1 => _toggleArmed;
         1 => _toggleOn;
         <<< "2C: Emu on; E1 toggle armed (ON)" >>>;
@@ -516,15 +516,15 @@ public class PerformanceScore
         _owlSeed(OwlSlots.a(), 0.8, -1);
         2::second => now;
         if(gen != _gen) return;
-        _emuBass(6, 1.0, OwlSlots.b());
+        _emuBass(6, 0.7, OwlSlots.b());
         2::second => now;
         if(gen != _gen) return;
         _albatross(1, 1.0, OwlSlots.b());
         _albatross(3, 1.0, OwlSlots.a());
         2::second => now;
         if(gen != _gen) return;
-        _emuGlide(0, 1.0, OwlSlots.b());
-        _emuGlide(4, 1.0, OwlSlots.a());
+        _emuGlide(0, 0.7, OwlSlots.b());
+        _emuGlide(4, 0.7, OwlSlots.a());
         2::second => now;
         if(gen != _gen) return;
         _albatross(2, 1.0, OwlSlots.a());
@@ -584,7 +584,7 @@ public class PerformanceScore
         }
         for(int s; s < _n; s++) _slotOff(s);
         for(int i; i < picks.size(); i++)
-            _parakeetHarmonize(picks[i], 1.0, -1);
+            _parakeetHarmonize(picks[i], 1.4, -1);
         <<< "4B: Parakeet slots", picks.size(), "active" >>>;
     }
 
