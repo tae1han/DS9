@@ -31,11 +31,11 @@ for f in graphics/performanceDisplay.ck server.ck autonomousFeeder.ck; do
   fi
 done
 
-chuck "$PROJECT_DIR/autonomousFeeder.ck:local" >/dev/null 2>&1 &
+chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
 LOG_DIR="$PROJECT_DIR/.local-logs"
 mkdir -p "$LOG_DIR"
-chuck "$PROJECT_DIR/server.ck:local:${MIDI_DEV}:sim:pad:midiLog:monitorTrace" >"$LOG_DIR/server.log" 2>&1 &
+chuck "$PROJECT_DIR/server.ck:${MIDI_DEV}:sim:pad:midiLog:monitorTrace" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
 echo "  server log: $LOG_DIR/server.log"
 cleanup() { kill "$SERVER_PID" "$FEEDER_PID" 2>/dev/null || true; }

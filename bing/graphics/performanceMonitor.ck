@@ -50,7 +50,7 @@ public class PerformanceMonitor
         descText.size(.22);
         descText.align(0);
         descText.color(@(.72, .72, .8));
-        descText.pos(@(0, -1.0, 0));
+        descText.pos(@(0, -.5, 0));
         "MIDI 100=1A | 36=5 | 29–35=movements | 28=toggle" => descText.text;
     }
 

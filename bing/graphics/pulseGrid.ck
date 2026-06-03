@@ -66,8 +66,8 @@ public class PulseGrid extends GGen
     {
         slot % 4 => int col;
         Math.floor(slot / 4.0) $ int => int row;
-        col * 3.4 - 5.1 => float x;
-        row * 3.0 - 1.5 => float y;
+        col * 3.1 - 4.65 => float x;
+        row * 3.35 - 1.675 => float y;
         return @(x, y, 0.5);
     }
 

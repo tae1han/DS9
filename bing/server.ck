@@ -363,6 +363,7 @@ if(SOLO_MONITOR)
     <<< "bing SOLO — piano monitor only" >>>;
 else
 {
+    <<< "v10 server OSC", MULTICAST_ADDR, "| :local = same-machine only" >>>;
     if(FIRST_NOTE_MUTE)
         <<< "v10 server — :pad: first note = 1B solo; MIDI 100=1A, 36=5, 29–35=movements, 28=toggle" >>>;
     else
