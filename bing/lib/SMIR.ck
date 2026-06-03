@@ -35,7 +35,8 @@ public class SMIR
 
     fun static int skipForPitchSet(int pitch)
     {
-        return isOwlToggleMidi(pitch) || isMovementMidi(pitch);
+        return isOwlToggleMidi(pitch) || isMovementMidi(pitch)
+            || pitch == 36 || pitch == 100;
     }
 
     fun static ezNote[] filterControlPitches(ezNote n[])

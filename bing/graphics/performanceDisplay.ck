@@ -36,7 +36,7 @@ descText.font("chugl:proggy-clean");
 descText.size(.22);
 descText.color(@(.7, .7, .78));
 descText.pos(@(0, 4.5, 0));
-"MIDI 36=1A/5 | 29–35=movements | 28=toggle" => descText.text;
+"MIDI 100=1A | 36=5 | 29–35=movements | 28=toggle" => descText.text;
 
 fun void _sceneAnnounceListen()
 {

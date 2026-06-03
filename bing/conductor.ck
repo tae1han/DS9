@@ -18,6 +18,7 @@
 29 => int MIDI_MOVEMENT_FIRST;
 35 => int MIDI_MOVEMENT_LAST;
 36 => int MIDI_CHAOS;
+100 => int MIDI_CHAOS_1A;
 
 5 => int OWL_SLOT_B;
 7 => int OWL_SLOT_A;
@@ -66,7 +67,9 @@ public class MidiCtl
     fun static int toggle() { return 28; }
     fun static int movementFirst() { return 29; }
     fun static int movementLast() { return 35; }
-    fun static int chaos() { return 36; }
+    fun static int chaos1A() { return 100; }  // E7
+    fun static int chaos5() { return 36; }    // C2
+    fun static int chaos() { return chaos5(); }
 }
 
 public class ReservedMidi
@@ -75,7 +78,8 @@ public class ReservedMidi
     {
         if(pitch == MidiCtl.toggle()) return 1;
         if(pitch >= MidiCtl.movementFirst() && pitch <= MidiCtl.movementLast()) return 1;
-        if(pitch == MidiCtl.chaos()) return 1;
+        if(pitch == MidiCtl.chaos1A()) return 1;
+        if(pitch == MidiCtl.chaos5()) return 1;
         return 0;
     }
 }

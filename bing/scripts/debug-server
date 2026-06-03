@@ -50,7 +50,7 @@ echo "  dir:  $PROJECT_DIR"
 echo "  MIDI: $MIDI_DEV"
 echo "  log:  $LOG_DIR/server.log"
 echo ""
-echo "MIDI 36=1A/5 chaos | 29-35=movements | 28=toggle (2C/3B) | other keys=piano"
+echo "MIDI 100=1A | 36=5 | 29-35=movements | 28=toggle (2C/3B) | other keys=piano"
 echo "Ctrl+C stops everything"
 echo ""
 

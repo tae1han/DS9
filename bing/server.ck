@@ -148,7 +148,7 @@ fun void _initMonitor()
     f.close();
     new SlorkPianoMonitorInst(MONITOR_SF2, 0) @=> monitorInst;
     monitorInst.numVoices(128);
-    if(SIM_MONITOR) monitorInst.gain(4.5);
+    if(SIM_MONITOR) monitorInst.gain(5.0);
     else monitorInst.gain(10);
     monitorInst => master;
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];
@@ -234,7 +234,12 @@ fun void _controlMidiLoop()
 
         if(pitch == MidiCtl.toggle())
             score.toggleListenChain();
-        else if(pitch == MidiCtl.chaos() || (pitch >= MidiCtl.movementFirst() && pitch <= MidiCtl.movementLast()))
+        else if(pitch == MidiCtl.chaos1A())
+        {
+            _resumeClientMidi();
+            score.apply1A();
+        }
+        else if(pitch == MidiCtl.chaos5() || (pitch >= MidiCtl.movementFirst() && pitch <= MidiCtl.movementLast()))
         {
             _resumeClientMidi();
             score.applyMovement(pitch);
@@ -350,7 +355,7 @@ if(SOLO_MONITOR)
 else
 {
     if(FIRST_NOTE_MUTE)
-        <<< "v10 server — :pad: first note = 1B solo; MIDI 36=1A/5, 29–35=movements, 28=toggle" >>>;
+        <<< "v10 server — :pad: first note = 1B solo; MIDI 100=1A, 36=5, 29–35=movements, 28=toggle" >>>;
     else
         <<< "v10 server — pass :pad for concert flow" >>>;
 }

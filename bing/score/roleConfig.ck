@@ -9,7 +9,7 @@ public class RoleConfig
     fun float performanceGain(int role)
     {
         if(role == 0) return 1.28;
-        if(role == 1) return 1.4;
+        if(role == 1) return 2.0;
         if(role == 2) return 1.4;
         if(role == 3) return 1.5;
         if(role == 4) return 1.3;
@@ -23,7 +23,7 @@ public class RoleConfig
     fun float chaosStaggerGain(int slot)
     {
         if(slot == 0) return 1.3;
-        if(slot == 1) return 1.4;
+        if(slot == 1) return 2.0;
         if(slot == 2) return 0.95;
         if(slot == 3) return 1.2;
         if(slot == 4) return 1.1;

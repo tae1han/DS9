@@ -11,7 +11,6 @@ public class PerformanceScore
     int _toggleArmed;   // 0 none, 1 = 2C, 2 = 3B
     int _toggleOn;      // 1 = ON (chain), 0 = OFF (human listen)
     int _padAfterChaosReady;
-    int _chaosReturnArmed;
 
     fun PerformanceScore(Conductor @ c, int numSlots)
     {
@@ -21,7 +20,6 @@ public class PerformanceScore
         0 => _toggleArmed;
         1 => _toggleOn;
         0 => _padAfterChaosReady;
-        0 => _chaosReturnArmed;
     }
 
     fun int bumpGen()
@@ -129,6 +127,7 @@ public class PerformanceScore
         _c.sendParam(slot, "rtMode", 0);
         _c.sendParam(slot, "polyphony", 1);
         _c.sendParam(slot, "probability", 1.0);
+        _c.sendParam(slot, "phraseOnlyEddies", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -160,6 +159,7 @@ public class PerformanceScore
         _c.sendRole(slot, RoleIds.emu());
         _roles.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 1);
+        _c.sendParam(slot, "phraseOnlyEddies", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -172,6 +172,7 @@ public class PerformanceScore
         _c.sendRole(slot, RoleIds.emu());
         _roles.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 0);
+        _c.sendParam(slot, "phraseOnlyEddies", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -191,6 +192,7 @@ public class PerformanceScore
         _c.sendParam(slot, "stepJitterMs", jitter);
         _c.sendParam(slot, "lowMidi", lo $ float);
         _c.sendParam(slot, "highMidi", hi $ float);
+        _c.sendParam(slot, "probability", 1.0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, -1);
         _c.sendActivate(slot, 0);
@@ -247,7 +249,7 @@ public class PerformanceScore
         if(setPostChaosPad) 1 => _padAfterChaosReady;
     }
 
-    // Movement 1A — MIDI 36
+    // Movement 1A — MIDI 100 (E7)
     fun void apply1A()
     {
         bumpGen() => int gen;
@@ -257,14 +259,30 @@ public class PerformanceScore
         spork ~ _staggerChaos(gen, 0);
     }
 
-    // Movement 5 — MIDI 36 (same chaos; pad after stagger)
+    // Movement 5 — MIDI 36 (C2); all slots on immediately
     fun void apply5()
     {
         bumpGen() => int gen;
-        _announce("Movement 5 — Return to chaos", "Autonomous chaos; pad after buildup");
+        _announce("Movement 5 — Return to chaos", "Instant octet chaos; pad after trigger");
         _c.sendFeederPause(0);
         _c.sendMidiForward(1);
-        spork ~ _staggerChaos(gen, 1);
+        _c.deactivateAll();
+        150::ms => now;
+        if(gen != _gen) return;
+        for(0 => int s; s < _n; s++)
+        {
+            if(gen != _gen) return;
+            s => int role;
+            _c.sendRole(s, role);
+            _roles.sendChaosMax(_c, s, role, _roles.chaosStaggerGain(s));
+            _c.sendListenTarget(s, -1);
+            _c.sendActivate(s, 0);
+            80::ms => now;
+            if(gen != _gen) return;
+            _c.sendActivate(s, 1);
+        }
+        if(gen != _gen) return;
+        1 => _padAfterChaosReady;
     }
 
     fun void _timeline2A(int gen)
@@ -294,11 +312,11 @@ public class PerformanceScore
         _parrotEcho(4, 1.2, OwlSlots.a());
         5::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(1, 1.4, OwlSlots.b());
+        _parakeetMirror(1, 2.0, OwlSlots.b());
         _parrotDevelop(0, 1.2, OwlSlots.b());
         2::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(3, 1.4, OwlSlots.a());
+        _parakeetMirror(3, 2.0, OwlSlots.a());
         _parrotDevelop(4, 1.2, OwlSlots.a());
     }
 
@@ -534,16 +552,12 @@ public class PerformanceScore
         for(int i; i < picks.size(); i++)
             _parakeetHarmonize(picks[i], 1.0, -1);
         <<< "4B: Parakeet slots", picks.size(), "active" >>>;
-        1 => _chaosReturnArmed;
     }
 
     fun void applyMovement(int pitch)
     {
-        if(pitch == MidiCtl.chaos())
-        {
-            if(_chaosReturnArmed) apply5();
-            else apply1A();
-        }
+        if(pitch == MidiCtl.chaos1A()) apply1A();
+        else if(pitch == MidiCtl.chaos5()) apply5();
         else if(pitch == 29) apply2A();
         else if(pitch == 30) apply2B();
         else if(pitch == 31) apply2C();

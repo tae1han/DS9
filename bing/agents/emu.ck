@@ -1,6 +1,8 @@
 @import "smuck"
 @import "../lib/agent.ck"
 
+@import "../lib/SMIR.ck"
+
 @import "../instruments/glideBassInst.ck"
 
 // Emu: only listens to the bottom voice of the phrase, contstructs a minimal bassline
@@ -233,15 +235,28 @@ public class Emu extends Agent
         return options[Math.random2(0, options.size() - 1)];
     }
 
+    fun void onAgentPhrase(int srcSlot, ezNote phrase[], int hopDepth)
+    {
+        if(!enabled || srcSlot != listenTarget) return;
+        if(!acceptAgentHop(hopDepth)) return;
+        _processPhrase(phrase);
+    }
+
     fun void onPhraseComplete()
     {
         if(!enabled) return;
         if(listenTarget != LISTEN_HUMAN) return;
+        source.completedPhrase.notes() @=> ezNote src[];
+        _processPhrase(src);
+    }
+
+    fun void _processPhrase(ezNote src[])
+    {
+        if(src == null || src.size() < minNotes) return;
         _connectInst();
 
         if(glideMode && inst != null)
         {
-            source.completedPhrase.notes() @=> ezNote src[];
             if(src.size() > 0)
             {
                 src[0].pitch() $ int => int phraseMin;
@@ -277,7 +292,9 @@ public class Emu extends Agent
 
         _thinking(thinkPhrase());
 
-        source.completedSmir.bottomLine(gateInterval, maxLeap, reacquireBeats) @=> ezNote line[];
+        SMIR sm;
+        sm.set(src);
+        sm.bottomLine(gateInterval, maxLeap, reacquireBeats) @=> ezNote line[];
         if(line == null || line.size() == 0) { _idle(); return; }
 
         _thinking(thinkPhrase(line.size()));
