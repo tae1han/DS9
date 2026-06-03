@@ -161,6 +161,15 @@ public class Conductor
         title => _out.add;
         description => _out.add;
         _out.send();
+        // Local display always listens on loopback; also send when using multicast addr.
+        if(_addr != "127.0.0.1")
+        {
+            _out.dest("127.0.0.1", _scenePort);
+            _out.start("/ds9/scene/announce");
+            title => _out.add;
+            description => _out.add;
+            _out.send();
+        }
     }
 
     fun void deactivateAll()

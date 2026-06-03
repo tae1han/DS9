@@ -16,6 +16,10 @@ PulseGrid grid;
 GText titleText;
 GText descText;
 
+"" => string _pendingTitle;
+"" => string _pendingDesc;
+0 => int _hasPendingScene;
+
 grid --> GG.scene();
 titleText --> GG.scene();
 descText --> GG.scene();
@@ -27,15 +31,17 @@ GG.bloomPass().intensity(0.6);
 @(0, 0, 14) => GG.camera().pos;
 
 titleText.font("chugl:proggy-clean");
-titleText.size(.38);
+titleText.size(.48);
+titleText.align(0);
 titleText.color(@(.95, .95, 1));
-titleText.pos(@(0, 5.2, 0));
-"Performance monitor" => titleText.text;
+titleText.pos(@(0, 5.8, 0));
+"—" => titleText.text;
 
 descText.font("chugl:proggy-clean");
 descText.size(.22);
+descText.align(0);
 descText.color(@(.7, .7, .78));
-descText.pos(@(0, 4.5, 0));
+descText.pos(@(0, 5.0, 0));
 "MIDI 100=1A | 36=5 | 29–35=movements | 28=toggle" => descText.text;
 
 fun void _sceneAnnounceListen()
@@ -51,8 +57,9 @@ fun void _sceneAnnounceListen()
         {
             msg.getString(0) => string t;
             msg.getString(1) => string d;
-            t => titleText.text;
-            d => descText.text;
+            t => _pendingTitle;
+            d => _pendingDesc;
+            1 => _hasPendingScene;
         }
     }
 }
@@ -103,5 +110,11 @@ spork ~ _pulseListen();
 while(true)
 {
     GG.nextFrame() => now;
+    if(_hasPendingScene)
+    {
+        _pendingTitle => titleText.text;
+        _pendingDesc => descText.text;
+        0 => _hasPendingScene;
+    }
     grid.tick();
 }

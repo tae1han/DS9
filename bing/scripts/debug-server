@@ -25,7 +25,7 @@ for arg in "$@"; do
   [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
 done
 
-SERVER_ARGS="${MIDI_DEV}:sim:pad:midiLog"
+SERVER_ARGS="local:${MIDI_DEV}:sim:pad:midiLog"
 
 cleanup() {
   pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
