@@ -24,7 +24,7 @@ if pgrep -f "chuck.*$PROJECT_DIR/" >/dev/null 2>&1; then
   sleep 1
 fi
 
-for f in studioConductor.ck server.ck autonomousFeeder.ck; do
+for f in performanceDisplay.ck server.ck autonomousFeeder.ck; do
   if [[ ! -f "$PROJECT_DIR/$f" ]]; then
     echo "missing $f in $PROJECT_DIR" >&2
     exit 1
@@ -42,4 +42,4 @@ cleanup() { kill "$SERVER_PID" "$FEEDER_PID" 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 sleep 1
 
-exec chuck "$PROJECT_DIR/studioConductor.ck"
+exec chuck "$PROJECT_DIR/performanceDisplay.ck"

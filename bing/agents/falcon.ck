@@ -37,6 +37,8 @@ public class Falcon extends Agent
         else if(param == "stepMsMax") val => stepMsMax;
         else if(param == "stepJitterMs") val => stepJitterMs;
         else if(param == "noteDurMs") val => noteDurMs;
+        else if(param == "lowMidi") val $ int => lowMidi;
+        else if(param == "highMidi") val $ int => highMidi;
         else if(param == "reversalProb") val => reversalProb;
         else if(param == "delayMin") val => responseDelayMin;
         else if(param == "delayMax") val => responseDelayMax;

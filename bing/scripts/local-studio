@@ -1,12 +1,12 @@
 #!/bin/bash
-# Eight-station local studio: server + 8 headless clients + ChuGL conductor GUI.
+# Eight-station local studio: server + 8 headless clients + read-only performance display.
 #
-# Usage (from DS9/v10-studio):
+# Usage (from DS9/bing):
 #   ./scripts/local-studio
 #   ./scripts/local-studio "USB Midi Cable"
 #
-# Opens studioConductor.ck (Movements + per-slot controls). No GameTrak required.
-# Logs: .local-logs/{client-*,feeder,studio,server}.log
+# Opens performanceDisplay.ck (pulse grid + movement title). Movements via MIDI on server.
+# Logs: .local-logs/{client-*,feeder,display,server}.log
 # Stop: Ctrl+C in server terminal, or ./scripts/local-stop
 
 set -euo pipefail
@@ -36,7 +36,7 @@ if ! command -v chuck >/dev/null 2>&1; then
   exit 1
 fi
 
-if pgrep -f "chuck.*$PROJECT_DIR/(server|client|autonomousFeeder|studioConductor|gametrakConductor)\\.ck" >/dev/null 2>&1; then
+if pgrep -f "chuck.*$PROJECT_DIR/(server|client|autonomousFeeder|performanceDisplay)\\.ck" >/dev/null 2>&1; then
   echo "Stopping existing studio processes..."
   "$SCRIPT_DIR/local-stop"
   sleep 1
@@ -65,7 +65,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "DS10 local studio — $PROJECT_DIR"
-echo "  ChuGL conductor GUI (no GameTrak)"
+echo "  Read-only performance display (MIDI-driven score on server)"
 echo "  logs: $LOG_DIR"
 echo ""
 
@@ -77,7 +77,7 @@ for slot in 0 1 2 3 4 5 6 7; do
 done
 
 echo ""
-echo "Starting server (before GUI so startup OSC cannot race movements)..."
+echo "Starting server..."
 chuck "$SERVER_CK" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
 BG_PIDS+=("$SERVER_PID")
@@ -106,12 +106,12 @@ chuck "autonomousFeeder.ck:local" >"$LOG_DIR/feeder.log" 2>&1 &
 BG_PIDS+=("$!")
 echo "  feeder           pid $!"
 
-chuck "studioConductor.ck:local" >"$LOG_DIR/studio.log" 2>&1 &
+chuck "performanceDisplay.ck:local" >"$LOG_DIR/display.log" 2>&1 &
 BG_PIDS+=("$!")
-echo "  studio GUI       pid $!"
+echo "  display          pid $!"
 
 echo ""
-echo "Waiting for clients and studio GUI..."
+echo "Waiting for clients and display..."
 sleep 3
 
 FAILED=0
@@ -127,13 +127,13 @@ for slot in 0 1 2 3 4 5 6 7; do
   fi
 done
 
-STUDIO_PID="${BG_PIDS[$(( ${#BG_PIDS[@]} - 1 ))]}"
-if ! kill -0 "$STUDIO_PID" 2>/dev/null; then
-  echo "ERROR: studio conductor exited — see $LOG_DIR/studio.log" >&2
-  tail -20 "$LOG_DIR/studio.log" >&2
+DISPLAY_PID="${BG_PIDS[$(( ${#BG_PIDS[@]} - 1 ))]}"
+if ! kill -0 "$DISPLAY_PID" 2>/dev/null; then
+  echo "ERROR: performance display exited — see $LOG_DIR/display.log" >&2
+  tail -20 "$LOG_DIR/display.log" >&2
   FAILED=1
-elif ! grep -q "Studio conductor ready" "$LOG_DIR/studio.log" 2>/dev/null; then
-  echo "WARN: studio GUI may still be starting — see $LOG_DIR/studio.log" >&2
+elif ! grep -q "performanceDisplay" "$LOG_DIR/display.log" 2>/dev/null; then
+  echo "WARN: display may still be starting — see $LOG_DIR/display.log" >&2
 fi
 
 if [[ "$FAILED" -eq 1 ]]; then
@@ -143,8 +143,8 @@ fi
 echo ""
 echo "Studio ready — TimGM monitor: $MIDI_DEV"
 echo "  Server log: $LOG_DIR/server.log"
-echo "  Use the ChuGL windows to activate slots, pick roles, adjust gains, run movements"
-echo "  Feeder starts when you click Chaos2 + feeder (or uncheck Feeder paused)"
+echo "  MIDI 36=1A/5 | 29–35=movements | 28=toggle (2C/3B) | other keys=piano"
+echo "  Feeder unpaused by Movement 1A / 5 (MIDI 36)"
 echo "  Ctrl+C stops everything"
 echo ""
 

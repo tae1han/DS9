@@ -1,7 +1,7 @@
 @import "smuck"
 @import "SMIR.ck"
 @import "bufferState.ck"
-@import "config.ck"
+@import "conductor.ck"
 
 // client-side bufferState that receives note data from server via OSC instead of local MIDI. phrase boundary
 // detection is handled by the server -- client listen for the events and reconstruct buffers locally.

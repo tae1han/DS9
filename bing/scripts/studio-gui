@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run only the ChuGL studio conductor (stack must already be running).
+# Run only the read-only performance display (stack must already be running).
 #
 # Usage:
 #   ./scripts/studio-gui
@@ -21,5 +21,5 @@ if ! command -v chuck >/dev/null 2>&1; then
 fi
 
 cd "$PROJECT_DIR"
-echo "DS10 studio conductor — attach to running local stack"
-exec chuck "studioConductor.ck:local"
+echo "DS10 performance display — attach to running local stack"
+exec chuck "performanceDisplay.ck:local"

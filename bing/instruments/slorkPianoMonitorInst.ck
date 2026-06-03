@@ -1,14 +1,13 @@
 @import "smuck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
+@import "../conductor.ck"
 
-// TimGM monitor — never sounds on MIDI 28–35 (literals match reservedMidi.ck).
+// TimGM monitor — never sounds on MIDI 28–36 (reserved control keys in conductor.ck).
 public class SlorkPianoMonitorInst extends ezFluidInst
 {
     fun int _isControl(int pitch)
     {
-        if(pitch == 28) return 1;
-        if(pitch >= 29 && pitch <= 35) return 1;
-        return 0;
+        return ReservedMidi.isControl(pitch);
     }
     fun SlorkPianoMonitorInst()
     {

@@ -1,7 +1,6 @@
 @import "smuck"
 @import "SMIR.ck"
-@import "config.ck"
-@import "reservedMidi.ck"
+@import "conductor.ck"
 
 public class bufferState
 {

@@ -1,5 +1,36 @@
-@import "config.ck"
 @import "smuck"
+
+// Shared bing constants (OSC paths use /ds9/ prefix).
+8 => int NUM_AGENT_SLOTS;
+0 => int ROLE_PARROT;
+1 => int ROLE_PARAKEET;
+2 => int ROLE_ALBATROSS;
+3 => int ROLE_PEACOCK;
+4 => int ROLE_EMU;
+5 => int ROLE_FALCON;
+6 => int ROLE_SWAN;
+7 => int ROLE_OWL;
+
+28 => int MIDI_TOGGLE;
+29 => int MIDI_MOVEMENT_FIRST;
+35 => int MIDI_MOVEMENT_LAST;
+36 => int MIDI_CHAOS;
+
+5 => int OWL_SLOT_B;
+7 => int OWL_SLOT_A;
+
+["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
+
+public class ReservedMidi
+{
+    fun static int isControl(int pitch)
+    {
+        if(pitch == MIDI_TOGGLE) return 1;
+        if(pitch >= MIDI_MOVEMENT_FIRST && pitch <= MIDI_MOVEMENT_LAST) return 1;
+        if(pitch == MIDI_CHAOS) return 1;
+        return 0;
+    }
+}
 
 public class Conductor
 {
@@ -8,6 +39,7 @@ public class Conductor
     int _numSlots;
     9100 => int _portBase;
     9110 => int _cuePort;
+    9111 => int _scenePort;
     9112 => int _feederPort;
     9113 => int _serverCtlPort;
 
@@ -60,27 +92,6 @@ public class Conductor
         sendParam(slot, "timbreIndex", timbreIndex $ float);
     }
 
-    fun void sendSoloistCue(string text)
-    {
-        <<< "SOLOIST:", text >>>;
-    }
-
-    fun void sendTriggerPhrase(int slot, ezNote notes[])
-    {
-        _out.dest(_addr, _portBase + slot);
-        _out.start("/ds9/control/triggerPhrase");
-        slot => _out.add;
-        notes.size() => _out.add;
-        for(int i; i < notes.size(); i++)
-        {
-            notes[i].pitch() $ int => _out.add;
-            notes[i].velocity() => _out.add;
-            notes[i].beats() => _out.add;
-            notes[i].onset() => _out.add;
-        }
-        _out.send();
-    }
-
     fun void sendCueAll(string text)
     {
         _out.dest(_addr, _cuePort);
@@ -89,6 +100,15 @@ public class Conductor
         text => _out.add;
         _out.send();
         <<< "CUE:", text >>>;
+    }
+
+    fun void sendSceneAnnounce(string title, string description)
+    {
+        _out.dest(_addr, _scenePort);
+        _out.start("/ds9/scene/announce");
+        title => _out.add;
+        description => _out.add;
+        _out.send();
     }
 
     fun void deactivateAll()
@@ -119,7 +139,6 @@ public class Conductor
         _out.send();
     }
 
-    // Tell server.ck to forward (or block) human MIDI / phrases to client buffers.
     fun void sendMidiForward(int enabled)
     {
         _out.dest(_addr, _serverCtlPort);
@@ -127,22 +146,4 @@ public class Conductor
         enabled => _out.add;
         _out.send();
     }
-
-    // Cancel staged sporks in studioConductor / other processes (separate ConductorScenes).
-    fun void sendSceneAbort()
-    {
-        _out.dest(_addr, _serverCtlPort);
-        _out.start("/ds9/control/sceneAbort");
-        _out.send();
-    }
-
-    // Run movement 2–8 in studioConductor (same code path as GUI buttons).
-    fun void sendRunMovement(int mov)
-    {
-        _out.dest(_addr, _serverCtlPort);
-        _out.start("/ds9/control/runMovement");
-        mov => _out.add;
-        _out.send();
-    }
-
 }

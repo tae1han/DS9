@@ -1,20 +1,28 @@
 @import "smuck"
+@import "../conductor.ck"
 
-// Eight-slot pulse grid for the studio conductor (reacts to /ds9/pulse).
-public class StudioGrid extends GGen
+// Eight-slot pulse grid + role label per cell (read-only monitor).
+public class PulseGrid extends GGen
 {
     8 => int NUM_SLOTS;
     .82 => float DECAY;
 
     GCircle _disc[8];
     GCircle _frame[8];
-    GText _label[8];
+    GText _slotLabel[8];
+    GText _roleLabel[8];
     float _env[8];
     vec3 _colors[8];
     int _active[8];
+    int _roles[8];
 
-    fun StudioGrid()
+    fun PulseGrid()
     {
+        for(0 => int i; i < NUM_SLOTS; i++)
+        {
+            -1 => _roles[i];
+            Color.hsv2rgb(@(((i $ float) * 45.0) % 360.0, 0.75, 0.55)) => _colors[i];
+        }
         _buildCells();
     }
 
@@ -22,15 +30,12 @@ public class StudioGrid extends GGen
     {
         for(0 => int i; i < NUM_SLOTS; i++)
         {
-            Color.hsv2rgb(@(((i $ float) * 45.0) % 360.0, 0.75, 0.55)) => _colors[i];
             0 => _active[i];
-
             GCircle frame --> GG.scene();
             frame @=> _frame[i];
             frame.pos(_cellPos(i));
             frame.sca(@(1.35, 1.35, 1));
-            @(0.12, 0.12, 0.14) => vec3 dim;
-            dim => frame.color;
+            @(0.12, 0.12, 0.14) => frame.color;
 
             GCircle c --> GG.scene();
             c @=> _disc[i];
@@ -39,13 +44,21 @@ public class StudioGrid extends GGen
             0 => _env[i];
             _applyCell(i);
 
-            GText lbl --> GG.scene();
-            lbl @=> _label[i];
-            lbl.font("chugl:proggy-clean");
-            lbl.size(.22);
-            lbl.color(@(.85, .85, .9));
-            lbl.pos(_cellPos(i) + @(0, -.95, 0));
-            ("S" + i) => lbl.text;
+            GText sl --> GG.scene();
+            sl @=> _slotLabel[i];
+            sl.font("chugl:proggy-clean");
+            sl.size(.22);
+            sl.color(@(.85, .85, .9));
+            sl.pos(_cellPos(i) + @(0, -.75, 0));
+            ("S" + i) => sl.text;
+
+            GText rl --> GG.scene();
+            rl @=> _roleLabel[i];
+            rl.font("chugl:proggy-clean");
+            rl.size(.18);
+            rl.color(@(.65, .65, .72));
+            rl.pos(_cellPos(i) + @(0, -1.05, 0));
+            "off" => rl.text;
         }
     }
 
@@ -58,11 +71,16 @@ public class StudioGrid extends GGen
         return @(x, y, 0.5);
     }
 
-    fun void setActive(int slot, int on)
+    fun void setSlotStatus(int slot, int active, int role)
     {
         if(slot < 0 || slot >= NUM_SLOTS) return;
-        on => _active[slot];
+        active => _active[slot];
+        role => _roles[slot];
         _applyCell(slot);
+        if(active && role >= 0 && role < ROLE_NAMES.size())
+            ROLE_NAMES[role] => _roleLabel[slot].text;
+        else
+            "off" => _roleLabel[slot].text;
     }
 
     fun void triggerPulse(int slot, float vel)
@@ -89,7 +107,6 @@ public class StudioGrid extends GGen
             else @(0.08, 0.08, 0.1) => c;
         }
         c => _disc[i].color;
-
         if(_active[i]) @(0.35, 0.35, 0.42) => _frame[i].color;
         else @(0.12, 0.12, 0.14) => _frame[i].color;
     }

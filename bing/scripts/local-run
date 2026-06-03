@@ -4,7 +4,6 @@
 # Usage (from DS9/v10-dev):
 #   ./scripts/local-run
 #   ./scripts/local-run "USB Midi Cable"
-#   ./scripts/local-run "USB Midi Cable" score     # enable automated movements.ck
 #   ./scripts/local-run solo                       # server monitor only
 #
 # After start (manual setups):
@@ -26,23 +25,15 @@ LOG_DIR="$PROJECT_DIR/.local-logs"
 
 MIDI_DEV="USB Midi Cable"
 SOLO=0
-USE_SCORE=0
 for arg in "$@"; do
   if [[ "$arg" == "solo" ]]; then
     SOLO=1
-  elif [[ "$arg" == "score" || "$arg" == "cues" ]]; then
-    USE_SCORE=1
-  elif [[ "$arg" == "noScore" || "$arg" == "manual" ]]; then
-    USE_SCORE=0
   else
     MIDI_DEV="$arg"
   fi
 done
 
 SERVER_CK="server.ck:local:${MIDI_DEV}:sim:pad"
-if [[ "$USE_SCORE" -eq 1 ]]; then
-  SERVER_CK="${SERVER_CK}:score"
-fi
 
 mkdir -p "$LOG_DIR"
 
@@ -122,17 +113,11 @@ fi
 
 echo ""
 echo "Server foreground — TimGM monitor on: $MIDI_DEV"
-if [[ "$USE_SCORE" -eq 1 ]]; then
-  echo "  Automated cues: score/movements.ck (starts on first MIDI note)"
-else
-  echo "  No auto score — drive stations from another terminal (see LOCAL_SIM.md)"
-fi
+echo "  Movements via MIDI (see score/composition.txt) or chuck tests/localSend.ck:scene:1a"
 echo "  Ctrl+C stops server + all clients"
 echo ""
-echo "Performance:"
-echo "  ./scripts/local-perform                # one terminal: clients + feeder + GameTrak + server"
-echo "  Or separately: local-autonomous + local-gametrak"
-echo "  Pedals: 1=chaos | MIDI=mute | 2=Owl | 3=Parrots | 4=Peacock/Swan | 5=solo"
+echo "Full stack with display:"
+echo "  ./scripts/local-studio"
 echo ""
 
 exec chuck "$SERVER_CK"

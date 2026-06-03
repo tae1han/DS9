@@ -266,6 +266,7 @@ public class Parakeet extends Agent
         else if(param == "listenTarget") setListenTarget(val $ int);
         else if(param == "enabled") { if(val > 0) enable(); else disable(); }
         else if(param == "phraseOnlyEddies") val $ int => _phraseOnlyEddies;
+        else if(param == "clearPitchSet") _clearUpstreamMask();
         else if(param == "maxHopDepth") val $ int => _maxHopDepth;
         else if(param == "eddiesEnabled") val $ int => _eddiesEnabled;
         else if(param == "verbose") val $ int => verbose;

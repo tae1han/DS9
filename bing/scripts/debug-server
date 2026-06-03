@@ -1,8 +1,5 @@
 #!/bin/bash
-# Concert debug: piano monitor server (foreground) + feeder + studio GUI.
-#
-# Server runs in the FOREGROUND — same as solo-monitor-test (proven working).
-# Feeder and studioConductor run in the background.
+# Concert debug: piano monitor server (foreground) + feeder + performance display.
 #
 # Usage:
 #   ./scripts/debug-server
@@ -28,8 +25,7 @@ for arg in "$@"; do
   [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
 done
 
-# Concert server (NOT :solo — clients need link ping + midiForward OSC in).
-SERVER_ARGS="${MIDI_DEV}:sim:pad:midiLog:monitorTrace"
+SERVER_ARGS="${MIDI_DEV}:sim:pad:midiLog"
 
 cleanup() {
   pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
@@ -44,27 +40,26 @@ echo "Stopping all Chuck in $PROJECT_DIR..."
 pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
 sleep 1
 
-for f in server.ck studioConductor.ck autonomousFeeder.ck; do
+for f in server.ck performanceDisplay.ck autonomousFeeder.ck; do
   [[ -f "$PROJECT_DIR/$f" ]] || { echo "missing $f" >&2; exit 1; }
 done
 
 echo ""
-echo "debug-server (server foreground; link + midi forward enabled)"
+echo "debug-server (server foreground; performance display in background)"
 echo "  dir:  $PROJECT_DIR"
 echo "  MIDI: $MIDI_DEV"
-echo "  log:  $LOG_DIR/server.log (tee)"
+echo "  log:  $LOG_DIR/server.log"
 echo ""
-echo "Keys 28-35: movements (via studioConductor). 28=owl toggle. Other keys: piano"
+echo "MIDI 36=1A/5 chaos | 29-35=movements | 28=toggle (2C/3B) | other keys=piano"
 echo "Ctrl+C stops everything"
 echo ""
 
 chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
 
-chuck "$PROJECT_DIR/studioConductor.ck" >/dev/null 2>&1 &
-STUDIO_PID=$!
+chuck "$PROJECT_DIR/performanceDisplay.ck:local" >/dev/null 2>&1 &
+DISPLAY_PID=$!
 
 sleep 1
 
-# Server in foreground (matches solo-monitor-test). Tee log for later inspection.
 exec chuck "$PROJECT_DIR/server.ck:${SERVER_ARGS}" 2>&1 | tee "$LOG_DIR/server.log"

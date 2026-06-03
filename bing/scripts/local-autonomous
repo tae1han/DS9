@@ -1,6 +1,6 @@
 #!/bin/bash
-# Autonomous feeder (idle until GameTrak pedal 1 starts chaos2).
-# Requires local-run + local-gametrak.
+# Autonomous feeder (idle until Movement 1A / 5 unpauses via server).
+# Requires local-run or local-studio stack.
 #
 #   ./scripts/local-autonomous
 

@@ -1,4 +1,4 @@
-@import "config.ck"
+@import "conductor.ck"
 @import "SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import {"bufferState.ck", "oscBufferState.ck", "agent.ck", "phraseMemory.ck"}
@@ -507,6 +507,8 @@ fun void _control()
                 }
                 else if(_isOwlParam(p))
                     agents[ROLE_OWL].setParam(p, v);
+                else if(p == "clearPitchSet")
+                    agents[ROLE_PARAKEET].setParam(p, v);
                 else if(activeRole >= 0) agents[activeRole].setParam(p, v);
                 else if(pendingRole >= 0) agents[pendingRole].setParam(p, v);
             }

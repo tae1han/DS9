@@ -16,7 +16,7 @@ public class SMIR
         n @=> notes;
     }
 
-    // Must match config.ck reserved MIDI (static methods cannot read imported globals).
+    // Must match conductor.ck reserved MIDI (static methods cannot read imported globals).
     fun static int isOwlToggleMidi(int pitch)
     {
         return pitch == 28;
