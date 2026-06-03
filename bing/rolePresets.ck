@@ -26,14 +26,14 @@ public class RolePresets
         c.sendParam(slot, "delayMin", 0.0);
         c.sendParam(slot, "delayMax", 0.0);
 
-        if(role == ROLE_PARROT)
+        if(role == RoleIds.parrot())
         {
             c.sendParam(slot, "mode", 1);
             c.sendParam(slot, "developTechnique", -1);
             c.sendParam(slot, "probability", 1.0);
             c.sendParam(slot, "delayMax", 0.05);
         }
-        else if(role == ROLE_PARAKEET)
+        else if(role == RoleIds.parakeet())
         {
             c.sendParam(slot, "rtMode", 1);
             c.sendParam(slot, "polyphony", 2);
@@ -45,7 +45,7 @@ public class RolePresets
             c.sendParam(slot, "silenceMin", 0.3);
             c.sendParam(slot, "silenceMax", 1.5);
         }
-        else if(role == ROLE_ALBATROSS)
+        else if(role == RoleIds.albatross())
         {
             c.sendParam(slot, "minNotes", 2);
             c.sendParam(slot, "minPitchClasses", 2);
@@ -58,14 +58,14 @@ public class RolePresets
             c.sendParam(slot, "maxVoices", 3);
             c.sendParam(slot, "velMax", 0.45);
         }
-        else if(role == ROLE_PEACOCK)
+        else if(role == RoleIds.peacock())
         {
             c.sendParam(slot, "timingScale", 0.8);
             c.sendParam(slot, "probability", 1.0);
         }
-        else if(role == ROLE_EMU)
+        else if(role == RoleIds.emu())
             c.sendParam(slot, "glideMode", 1);
-        else if(role == ROLE_FALCON)
+        else if(role == RoleIds.falcon())
         {
             c.sendParam(slot, "numNotesMin", 12);
             c.sendParam(slot, "numNotesMax", 24);
@@ -75,7 +75,7 @@ public class RolePresets
             c.sendParam(slot, "noteDurMs", 280.0);
             c.sendParam(slot, "probability", 0.9);
         }
-        else if(role == ROLE_SWAN)
+        else if(role == RoleIds.swan())
         {
             c.sendParam(slot, "repeatSpeed", 0.35);
             c.sendParam(slot, "repeatGapBeats", 0.25);
@@ -84,7 +84,7 @@ public class RolePresets
             c.sendParam(slot, "repeatExtraMax", 2);
             c.sendParam(slot, "probability", 0.55);
         }
-        else if(role == ROLE_OWL)
+        else if(role == RoleIds.owl())
         {
             c.sendParam(slot, "owlMode", 0);
             c.sendParam(slot, "quantizeRecall", 0);
@@ -94,7 +94,7 @@ public class RolePresets
             c.sendParam(slot, "seedProb", 0);
         }
 
-        if(role != ROLE_OWL)
+        if(role != RoleIds.owl())
         {
             c.sendParam(slot, "eddiesEnabled", 1);
             c.sendParam(slot, "phraseOnlyEddies", 0);

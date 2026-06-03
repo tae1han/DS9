@@ -21,6 +21,38 @@
 
 ["Parrot", "Parakeet", "Albatross", "Peacock", "Emu", "Falcon", "Swan", "Owl"] @=> string ROLE_NAMES[];
 
+// Static accessors — classes in imported files cannot read module globals above.
+public class RoleIds
+{
+    fun static int parrot() { return 0; }
+    fun static int parakeet() { return 1; }
+    fun static int albatross() { return 2; }
+    fun static int peacock() { return 3; }
+    fun static int emu() { return 4; }
+    fun static int falcon() { return 5; }
+    fun static int swan() { return 6; }
+    fun static int owl() { return 7; }
+
+    fun static string name(int role)
+    {
+        if(role == 0) return "Parrot";
+        if(role == 1) return "Parakeet";
+        if(role == 2) return "Albatross";
+        if(role == 3) return "Peacock";
+        if(role == 4) return "Emu";
+        if(role == 5) return "Falcon";
+        if(role == 6) return "Swan";
+        if(role == 7) return "Owl";
+        return "off";
+    }
+}
+
+public class OwlSlots
+{
+    fun static int b() { return 5; }
+    fun static int a() { return 7; }
+}
+
 public class ReservedMidi
 {
     // Literals only — static methods cannot read module globals (MIDI_* below).

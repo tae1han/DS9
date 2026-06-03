@@ -69,7 +69,7 @@ public class PerformanceScore
     fun void _owlSeed(int slot, float gain, int listen)
     {
         if(slot < 0 || slot >= _n) return;
-        _c.sendRole(slot, ROLE_OWL);
+        _c.sendRole(slot, RoleIds.owl());
         _c.sendParam(slot, "owlMode", 1);
         _c.sendParam(slot, "eddiesEnabled", 1);
         _c.sendParam(slot, "phraseOnlyEddies", 0);
@@ -86,7 +86,7 @@ public class PerformanceScore
     fun void _owlDevelop(int slot, float gain, int listen)
     {
         if(slot < 0 || slot >= _n) return;
-        _c.sendRole(slot, ROLE_OWL);
+        _c.sendRole(slot, RoleIds.owl());
         _c.sendParam(slot, "owlMode", 0);
         _c.sendParam(slot, "eddiesEnabled", 0);
         _c.sendParam(slot, "phraseOnlyEddies", 1);
@@ -100,7 +100,7 @@ public class PerformanceScore
 
     fun void _parrotEcho(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_PARROT);
+        _c.sendRole(slot, RoleIds.parrot());
         _c.sendParam(slot, "mode", 0);
         _c.sendParam(slot, "probability", 1.0);
         _c.sendParam(slot, "roleGain", gain);
@@ -112,7 +112,7 @@ public class PerformanceScore
 
     fun void _parrotDevelop(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_PARROT);
+        _c.sendRole(slot, RoleIds.parrot());
         _c.sendParam(slot, "mode", 1);
         _c.sendParam(slot, "developTechnique", -1);
         _c.sendParam(slot, "probability", 1.0);
@@ -125,7 +125,7 @@ public class PerformanceScore
 
     fun void _parakeetMirror(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_PARAKEET);
+        _c.sendRole(slot, RoleIds.parakeet());
         _c.sendParam(slot, "rtMode", 0);
         _c.sendParam(slot, "polyphony", 1);
         _c.sendParam(slot, "probability", 1.0);
@@ -138,7 +138,7 @@ public class PerformanceScore
 
     fun void _parakeetHarmonize(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_PARAKEET);
+        _c.sendRole(slot, RoleIds.parakeet());
         _c.sendParam(slot, "rtMode", 1);
         _c.sendParam(slot, "polyphony", 1);
         _c.sendParam(slot, "probability", 1.0);
@@ -152,13 +152,13 @@ public class PerformanceScore
 
     fun void _albatross(int slot, float gain, int listen)
     {
-        _slotOn(slot, ROLE_ALBATROSS, gain, listen);
+        _slotOn(slot, RoleIds.albatross(), gain, listen);
     }
 
     fun void _emuGlide(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_EMU);
-        _presets.sendBaseline(_c, slot, ROLE_EMU);
+        _c.sendRole(slot, RoleIds.emu());
+        _presets.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 1);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
@@ -169,8 +169,8 @@ public class PerformanceScore
 
     fun void _emuBass(int slot, float gain, int listen)
     {
-        _c.sendRole(slot, ROLE_EMU);
-        _presets.sendBaseline(_c, slot, ROLE_EMU);
+        _c.sendRole(slot, RoleIds.emu());
+        _presets.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
@@ -182,8 +182,8 @@ public class PerformanceScore
     fun void _falconPreset(int slot, float gain, int nMin, int nMax,
         float sMin, float sMax, float jitter, int lo, int hi)
     {
-        _c.sendRole(slot, ROLE_FALCON);
-        _presets.sendBaseline(_c, slot, ROLE_FALCON);
+        _c.sendRole(slot, RoleIds.falcon());
+        _presets.sendBaseline(_c, slot, RoleIds.falcon());
         _c.sendParam(slot, "numNotesMin", nMin);
         _c.sendParam(slot, "numNotesMax", nMax);
         _c.sendParam(slot, "stepMsMin", sMin);
@@ -271,8 +271,8 @@ public class PerformanceScore
     {
         8::second => now;
         if(gen != _gen) return;
-        _owlSeed(OWL_SLOT_B, 0.8, -1);
-        <<< "2A: Owl slot", OWL_SLOT_B, "seed @ 8s" >>>;
+        _owlSeed(OwlSlots.b(), 0.8, -1);
+        <<< "2A: Owl slot", OwlSlots.b(), "seed @ 8s" >>>;
     }
 
     fun void apply2A()
@@ -283,7 +283,7 @@ public class PerformanceScore
         _c.sendMidiForward(1);
         _c.deactivateAll();
         80::ms => now;
-        _owlSeed(OWL_SLOT_A, 0.8, -1);
+        _owlSeed(OwlSlots.a(), 0.8, -1);
         spork ~ _timeline2A(gen);
     }
 
@@ -291,15 +291,15 @@ public class PerformanceScore
     {
         5::second => now;
         if(gen != _gen) return;
-        _parrotEcho(4, 1.2, OWL_SLOT_A);
+        _parrotEcho(4, 1.2, OwlSlots.a());
         5::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(1, 1.4, OWL_SLOT_B);
-        _parrotDevelop(0, 1.2, OWL_SLOT_B);
+        _parakeetMirror(1, 1.4, OwlSlots.b());
+        _parrotDevelop(0, 1.2, OwlSlots.b());
         2::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(3, 1.4, OWL_SLOT_A);
-        _parrotDevelop(4, 1.2, OWL_SLOT_A);
+        _parakeetMirror(3, 1.4, OwlSlots.a());
+        _parrotDevelop(4, 1.2, OwlSlots.a());
     }
 
     fun void apply2B()
@@ -308,7 +308,7 @@ public class PerformanceScore
         _announce("Movement 2B — Growing chain", "Parrots → Parakeets on Owls");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
-        _parrotEcho(0, 1.2, OWL_SLOT_B);
+        _parrotEcho(0, 1.2, OwlSlots.b());
         spork ~ _timeline2B(gen);
     }
 
@@ -316,8 +316,8 @@ public class PerformanceScore
     {
         8::second => now;
         if(gen != _gen) return;
-        _emuGlide(1, 1.0, OWL_SLOT_B);
-        _emuBass(3, 1.0, OWL_SLOT_A);
+        _emuGlide(1, 1.0, OwlSlots.b());
+        _emuBass(3, 1.0, OwlSlots.a());
         1 => _toggleArmed;
         1 => _toggleOn;
         <<< "2C: Emu on; E1 toggle armed (ON)" >>>;
@@ -329,14 +329,14 @@ public class PerformanceScore
         _announce("Movement 2C — Quartet", "Owls develop; chain thickens @ 8s");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
-        _owlDevelop(OWL_SLOT_B, 0.8, -1);
-        _owlDevelop(OWL_SLOT_A, 0.8, -1);
-        _parrotDevelop(0, 1.2, OWL_SLOT_B);
-        _parrotDevelop(4, 1.2, OWL_SLOT_A);
+        _owlDevelop(OwlSlots.b(), 0.8, -1);
+        _owlDevelop(OwlSlots.a(), 0.8, -1);
+        _parrotDevelop(0, 1.2, OwlSlots.b());
+        _parrotDevelop(4, 1.2, OwlSlots.a());
         _slotOff(1);
         _slotOff(3);
-        _albatross(2, 1.0, OWL_SLOT_B);
-        _albatross(6, 1.0, OWL_SLOT_A);
+        _albatross(2, 1.0, OwlSlots.b());
+        _albatross(6, 1.0, OwlSlots.a());
         spork ~ _timeline2C(gen);
     }
 
@@ -344,23 +344,23 @@ public class PerformanceScore
     {
         if(_toggleOn)
         {
-            _owlSeed(OWL_SLOT_B, 0.8, -1);
-            _owlSeed(OWL_SLOT_A, 0.8, -1);
-            _c.sendListenTarget(0, OWL_SLOT_B);
-            _c.sendListenTarget(2, OWL_SLOT_B);
-            _c.sendListenTarget(1, OWL_SLOT_B);
-            _c.sendListenTarget(4, OWL_SLOT_A);
-            _c.sendListenTarget(6, OWL_SLOT_A);
-            _c.sendListenTarget(3, OWL_SLOT_A);
+            _owlSeed(OwlSlots.b(), 0.8, -1);
+            _owlSeed(OwlSlots.a(), 0.8, -1);
+            _c.sendListenTarget(0, OwlSlots.b());
+            _c.sendListenTarget(2, OwlSlots.b());
+            _c.sendListenTarget(1, OwlSlots.b());
+            _c.sendListenTarget(4, OwlSlots.a());
+            _c.sendListenTarget(6, OwlSlots.a());
+            _c.sendListenTarget(3, OwlSlots.a());
         }
         else
         {
-            _owlDevelop(OWL_SLOT_B, 0.8, -1);
-            _owlDevelop(OWL_SLOT_A, 0.8, -1);
-            _c.sendListenTarget(0, OWL_SLOT_B);
+            _owlDevelop(OwlSlots.b(), 0.8, -1);
+            _owlDevelop(OwlSlots.a(), 0.8, -1);
+            _c.sendListenTarget(0, OwlSlots.b());
             _c.sendListenTarget(2, -1);
             _c.sendListenTarget(1, -1);
-            _c.sendListenTarget(4, OWL_SLOT_A);
+            _c.sendListenTarget(4, OwlSlots.a());
             _c.sendListenTarget(6, -1);
             _c.sendListenTarget(3, -1);
         }
@@ -370,22 +370,22 @@ public class PerformanceScore
     {
         if(_toggleOn)
         {
-            _owlSeed(OWL_SLOT_B, 0.8, -1);
-            _owlSeed(OWL_SLOT_A, 0.8, -1);
-            _c.sendListenTarget(0, OWL_SLOT_B);
-            _c.sendListenTarget(1, OWL_SLOT_B);
-            _c.sendListenTarget(6, OWL_SLOT_B);
-            _c.sendListenTarget(2, OWL_SLOT_A);
-            _c.sendListenTarget(3, OWL_SLOT_A);
-            _c.sendListenTarget(4, OWL_SLOT_A);
+            _owlSeed(OwlSlots.b(), 0.8, -1);
+            _owlSeed(OwlSlots.a(), 0.8, -1);
+            _c.sendListenTarget(0, OwlSlots.b());
+            _c.sendListenTarget(1, OwlSlots.b());
+            _c.sendListenTarget(6, OwlSlots.b());
+            _c.sendListenTarget(2, OwlSlots.a());
+            _c.sendListenTarget(3, OwlSlots.a());
+            _c.sendListenTarget(4, OwlSlots.a());
         }
         else
         {
-            _owlDevelop(OWL_SLOT_B, 0.8, -1);
-            _owlDevelop(OWL_SLOT_A, 0.8, -1);
+            _owlDevelop(OwlSlots.b(), 0.8, -1);
+            _owlDevelop(OwlSlots.a(), 0.8, -1);
             for(int s; s < _n; s++)
             {
-                if(s == OWL_SLOT_A || s == OWL_SLOT_B) continue;
+                if(s == OwlSlots.a() || s == OwlSlots.b()) continue;
                 _c.sendListenTarget(s, -1);
             }
         }
@@ -460,22 +460,22 @@ public class PerformanceScore
     {
         4::second => now;
         if(gen != _gen) return;
-        _owlSeed(OWL_SLOT_B, 0.8, -1);
-        _owlSeed(OWL_SLOT_A, 0.8, -1);
+        _owlSeed(OwlSlots.b(), 0.8, -1);
+        _owlSeed(OwlSlots.a(), 0.8, -1);
         2::second => now;
         if(gen != _gen) return;
-        _emuBass(6, 1.0, OWL_SLOT_B);
+        _emuBass(6, 1.0, OwlSlots.b());
         2::second => now;
         if(gen != _gen) return;
-        _albatross(1, 1.0, OWL_SLOT_B);
-        _albatross(3, 1.0, OWL_SLOT_A);
+        _albatross(1, 1.0, OwlSlots.b());
+        _albatross(3, 1.0, OwlSlots.a());
         2::second => now;
         if(gen != _gen) return;
-        _emuGlide(0, 1.0, OWL_SLOT_B);
-        _emuGlide(4, 1.0, OWL_SLOT_A);
+        _emuGlide(0, 1.0, OwlSlots.b());
+        _emuGlide(4, 1.0, OwlSlots.a());
         2::second => now;
         if(gen != _gen) return;
-        _albatross(2, 1.0, OWL_SLOT_A);
+        _albatross(2, 1.0, OwlSlots.a());
         2 => _toggleArmed;
         1 => _toggleOn;
         _applyToggle3B();
@@ -539,7 +539,7 @@ public class PerformanceScore
 
     fun void applyMovement(int pitch)
     {
-        if(pitch == MIDI_CHAOS)
+        if(pitch == 36)
         {
             if(_chaosReturnArmed) apply5();
             else apply1A();

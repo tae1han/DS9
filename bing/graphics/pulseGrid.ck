@@ -77,8 +77,8 @@ public class PulseGrid extends GGen
         active => _active[slot];
         role => _roles[slot];
         _applyCell(slot);
-        if(active && role >= 0 && role < ROLE_NAMES.size())
-            ROLE_NAMES[role] => _roleLabel[slot].text;
+        if(active && role >= 0 && role <= 7)
+            RoleIds.name(role) => _roleLabel[slot].text;
         else
             "off" => _roleLabel[slot].text;
     }
