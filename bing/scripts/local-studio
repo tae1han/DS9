@@ -106,13 +106,7 @@ chuck "autonomousFeeder.ck:local" >"$LOG_DIR/feeder.log" 2>&1 &
 BG_PIDS+=("$!")
 echo "  feeder           pid $!"
 
-chuck "graphics/performanceDisplay.ck:local" >"$LOG_DIR/display.log" 2>&1 &
-BG_PIDS+=("$!")
-echo "  display          pid $!"
-
-echo ""
-echo "Waiting for clients and display..."
-sleep 3
+# ChuGL monitor runs inside server.ck
 
 FAILED=0
 for slot in 0 1 2 3 4 5 6 7; do
@@ -126,15 +120,6 @@ for slot in 0 1 2 3 4 5 6 7; do
     FAILED=1
   fi
 done
-
-DISPLAY_PID="${BG_PIDS[$(( ${#BG_PIDS[@]} - 1 ))]}"
-if ! kill -0 "$DISPLAY_PID" 2>/dev/null; then
-  echo "ERROR: performance display exited — see $LOG_DIR/display.log" >&2
-  tail -20 "$LOG_DIR/display.log" >&2
-  FAILED=1
-elif ! grep -q "performanceDisplay" "$LOG_DIR/display.log" 2>/dev/null; then
-  echo "WARN: display may still be starting — see $LOG_DIR/display.log" >&2
-fi
 
 if [[ "$FAILED" -eq 1 ]]; then
   exit 1

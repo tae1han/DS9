@@ -31,4 +31,4 @@ trap cleanup EXIT INT TERM
 command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
 
-chuck -c8 "client.ck:${SLOT}:pkmn:flash" --bufsize:1024
+chuck -c8 "client.ck:${SLOT}:local:pkmn:flash" --bufsize:1024

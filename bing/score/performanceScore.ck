@@ -1,10 +1,12 @@
 @import "../conductor.ck"
+@import "../graphics/performanceMonitor.ck"
 @import "roleConfig.ck"
 
 // Performance score — mirrors score/composition.txt. Single server-owned scene engine.
 public class PerformanceScore
 {
     Conductor @ _c;
+    PerformanceMonitor @ _monitor;
     RoleConfig _roles;
     int _n;
     int _gen;
@@ -12,9 +14,10 @@ public class PerformanceScore
     int _toggleOn;      // 1 = ON (chain), 0 = OFF (human listen)
     int _padAfterChaosReady;
 
-    fun PerformanceScore(Conductor @ c, int numSlots)
+    fun PerformanceScore(Conductor @ c, int numSlots, PerformanceMonitor @ monitor)
     {
         c @=> _c;
+        monitor @=> _monitor;
         numSlots => _n;
         0 => _gen;
         0 => _toggleArmed;
@@ -41,6 +44,7 @@ public class PerformanceScore
     {
         <<< "==========", title, "==========" >>>;
         <<< desc >>>;
+        if(_monitor != null) _monitor.setMovement(title, desc);
         _c.sendSceneAnnounce(title, desc);
         _c.sendCueAll(title);
     }
