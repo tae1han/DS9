@@ -23,7 +23,7 @@ public class PerformanceMonitor
     fun void _buildScene()
     {
         FlatMaterial bgMat;
-        @(0.06, 0.06, 0.08) => bgMat.color;
+        @(0, 0, 0) => bgMat.color;
         GPlane bg --> GG.scene();
         bg.material(bgMat);
         bg.pos(@(0, 0, -1));
@@ -34,7 +34,7 @@ public class PerformanceMonitor
         descText --> GG.scene();
 
         GG.camera().orthographic();
-        @(0.55, 0.55, 0.6) => GG.scene().ambient;
+        @(1, 1, 1) => GG.scene().ambient;
         GG.bloom(true);
         GG.bloomPass().intensity(0.6);
         @(0, 0, 14) => GG.camera().pos;
@@ -43,14 +43,14 @@ public class PerformanceMonitor
         titleText.size(.48);
         titleText.align(0);
         titleText.color(@(1, 1, 1));
-        titleText.pos(@(0, 5.8, 0));
+        titleText.pos(@(0, 0, 0));
         "—" => titleText.text;
 
         descText.font("chugl:proggy-clean");
         descText.size(.22);
         descText.align(0);
         descText.color(@(.72, .72, .8));
-        descText.pos(@(0, 5.0, 0));
+        descText.pos(@(0, -1.0, 0));
         "MIDI 100=1A | 36=5 | 29–35=movements | 28=toggle" => descText.text;
     }
 
