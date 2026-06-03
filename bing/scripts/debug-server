@@ -1,9 +1,11 @@
 #!/bin/bash
-# Concert debug: piano monitor server (foreground) + feeder + performance display.
+# Networked concert debug: server (foreground) + feeder. ChuGL monitor in server.ck.
+# Clients on other machines: ./scripts/debug-client <slot>
 #
 # Usage:
 #   ./scripts/debug-server
 #   ./scripts/debug-server "USB Midi Cable"
+#   ./scripts/debug-server local              # same-machine only (127.0.0.1)
 
 set -euo pipefail
 
@@ -21,11 +23,18 @@ LOG_DIR="$PROJECT_DIR/.local-logs"
 mkdir -p "$LOG_DIR"
 
 MIDI_DEV="USB Midi Cable"
+LOCAL_ARGS=""
 for arg in "$@"; do
-  [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"
+  if [[ "$arg" == "local" ]]; then
+    LOCAL_ARGS="local:"
+  elif [[ "$arg" != [0-9]* ]]; then
+    MIDI_DEV="$arg"
+  fi
 done
 
-SERVER_ARGS="local:${MIDI_DEV}:sim:pad:midiLog"
+SERVER_ARGS="${LOCAL_ARGS}${MIDI_DEV}:sim:pad:midiLog"
+FEEDER_ARGS=""
+[[ -n "$LOCAL_ARGS" ]] && FEEDER_ARGS=":local"
 
 cleanup() {
   pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
@@ -45,7 +54,7 @@ for f in server.ck graphics/performanceDisplay.ck autonomousFeeder.ck; do
 done
 
 echo ""
-echo "debug-server (server foreground; performance display in background)"
+echo "debug-server (OSC multicast 224.0.0.1 unless 'local' arg)"
 echo "  dir:  $PROJECT_DIR"
 echo "  MIDI: $MIDI_DEV"
 echo "  log:  $LOG_DIR/server.log"
@@ -54,7 +63,7 @@ echo "MIDI 100=1A | 36=5 | 29-35=movements | 28=toggle (2C/3B) | other keys=pian
 echo "Ctrl+C stops everything"
 echo ""
 
-chuck "$PROJECT_DIR/autonomousFeeder.ck:local" >/dev/null 2>&1 &
+chuck "$PROJECT_DIR/autonomousFeeder.ck${FEEDER_ARGS}" >/dev/null 2>&1 &
 FEEDER_PID=$!
 
 # ChuGL monitor runs inside server.ck (no separate display process)

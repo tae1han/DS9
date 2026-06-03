@@ -1,10 +1,16 @@
 #!/bin/bash
+# Networked client for debug-server on another machine (OSC 224.0.0.1).
+#
+# Usage:
+#   ./scripts/debug-client <slot 0-7>
+#   ./scripts/debug-client <slot> local   # same-machine as server only
+
 set -euo pipefail
 
 networksetup -setairportpower en0 off 2>/dev/null || true
 
 if [[ $# -lt 1 ]]; then
-  echo "usage: $0 <slot 0-7>" >&2
+  echo "usage: $0 <slot 0-7> [local]" >&2
   exit 1
 fi
 
@@ -12,6 +18,11 @@ SLOT="$1"
 if [[ ! "$SLOT" =~ ^[0-7]$ ]]; then
   echo "slot must be 0-7" >&2
   exit 1
+fi
+
+LOCAL_ARG=""
+if [[ "${2:-}" == "local" ]]; then
+  LOCAL_ARG=":local"
 fi
 
 SOURCE="${BASH_SOURCE[0]}"
@@ -31,4 +42,4 @@ trap cleanup EXIT INT TERM
 command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
 cd "$PROJECT_DIR"
 
-chuck -c8 "client.ck:${SLOT}:local:pkmn:flash" --bufsize:1024
+chuck -c8 "client.ck:${SLOT}${LOCAL_ARG}:pkmn:flash" --bufsize:1024
