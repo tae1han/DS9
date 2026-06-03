@@ -1,12 +1,12 @@
 @import "../conductor.ck"
-@import "../graphics/performanceMonitor.ck"
+@import "../graphics/monitor.ck"
 @import "roleConfig.ck"
 
 // Performance score — mirrors score/composition.txt. Single server-owned scene engine.
 public class PerformanceScore
 {
     Conductor @ _c;
-    PerformanceMonitor @ _monitor;
+    Monitor @ _monitor;
     RoleConfig _roles;
     int _n;
     int _gen;
@@ -14,7 +14,7 @@ public class PerformanceScore
     int _toggleOn;      // 1 = ON (chain), 0 = OFF (human listen)
     int _padAfterChaosReady;
 
-    fun PerformanceScore(Conductor @ c, int numSlots, PerformanceMonitor @ monitor)
+    fun PerformanceScore(Conductor @ c, int numSlots, Monitor @ monitor)
     {
         c @=> _c;
         monitor @=> _monitor;
@@ -252,9 +252,9 @@ public class PerformanceScore
             _c.sendParam(s, "clearMemory", 1);
         }
         if(forPostChaos)
-            _announce("Movement 5 end — human solo", "All agents off; phrase memory cleared");
+            _announce("Movement 5 end - human solo", "All agents off; phrase memory cleared");
         else
-            _announce("Movement 1B — Human solo", "All agents off; play contemplative solo");
+            _announce("Movement 1B - Human solo", "All agents off; play contemplative solo");
     }
 
     fun void _staggerChaos(int gen, int setPostChaosPad)
@@ -287,7 +287,7 @@ public class PerformanceScore
     fun void apply1A()
     {
         bumpGen() => int gen;
-        _announce("Movement 1A — Chaos", "Autonomous chaos; feeder on");
+        _announce("Movement 1A - Chaos", "Autonomous chaos; feeder on");
         _c.sendFeederPause(0);
         _c.sendMidiForward(1);
         spork ~ _staggerChaos(gen, 0);
@@ -297,7 +297,7 @@ public class PerformanceScore
     fun void apply5()
     {
         bumpGen() => int gen;
-        _announce("Movement 5 — Return to chaos", "Instant octet chaos; pad after trigger");
+        _announce("Movement 5 - Return to chaos", "Instant octet chaos; pad after trigger");
         _c.sendFeederPause(0);
         _c.sendMidiForward(1);
         _c.deactivateAll();
@@ -330,7 +330,7 @@ public class PerformanceScore
     fun void apply2A()
     {
         bumpGen() => int gen;
-        _announce("Movement 2A — Owl Duet", "Owl 7 seed now; Owl 5 @ 8s");
+        _announce("Movement 2A - Owl Duet", "Owl 7 seed now; Owl 5 @ 8s");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _c.deactivateAll();
@@ -357,7 +357,7 @@ public class PerformanceScore
     fun void apply2B()
     {
         bumpGen() => int gen;
-        _announce("Movement 2B — Growing chain", "Parrots; Swan→5, Peacock→7");
+        _announce("Movement 2B - Growing chain", "Parrots; Swan->5, Peacock->7");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _parrotEcho(0, 1.2, OwlSlots.b());
@@ -378,7 +378,7 @@ public class PerformanceScore
     fun void apply2C()
     {
         bumpGen() => int gen;
-        _announce("Movement 2C — Quartet", "Owls develop; chain thickens @ 8s");
+        _announce("Movement 2C - Quartet", "Owls develop; chain thickens @ 8s");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _owlDevelop(OwlSlots.b(), 0.8, -1);
@@ -499,7 +499,7 @@ public class PerformanceScore
     fun void apply3A()
     {
         bumpGen() => int gen;
-        _announce("Movement 3A — Falcon Soli", "Alternating high/low falcon groups");
+        _announce("Movement 3A - Falcon Soli", "Alternating high/low falcon groups");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         for(int s; s < _n; s++) _slotOff(s);
@@ -537,7 +537,7 @@ public class PerformanceScore
     fun void apply3B()
     {
         bumpGen() => int gen;
-        _announce("Movement 3B — Albatross + Emu", "Clear memory; Owls seed @ 4s");
+        _announce("Movement 3B - Albatross + Emu", "Clear memory; Owls seed @ 4s");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _c.deactivateAll();
@@ -548,7 +548,7 @@ public class PerformanceScore
     fun void apply4A()
     {
         bumpGen();
-        _announce("Movement 4A — Octet chaos", "All roles, max chaos, human listen");
+        _announce("Movement 4A - Octet chaos", "All roles, max chaos, human listen");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         for(0 => int s; s < _n; s++)
@@ -566,7 +566,7 @@ public class PerformanceScore
     fun void apply4B()
     {
         bumpGen();
-        _announce("Movement 4B — Parakeet Soli", "1–3 random Parakeets harmonize you");
+        _announce("Movement 4B - Parakeet Soli", "1-3 random Parakeets harmonize you");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _clearAllMemory();

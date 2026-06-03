@@ -2,14 +2,15 @@
 @import "../conductor.ck"
 @import "pulseGrid.ck"
 
-// Server/read-only ChuGL monitor: movement title + pulse grid + slot roles.
-public class PerformanceMonitor
+// Server ChuGL monitor: movement title + pulse grid + slot roles.
+// Use ASCII only in movement strings (proggy-clean has no em/en dash glyphs).
+public class Monitor
 {
     PulseGrid grid;
     GText titleText;
     GText descText;
 
-    fun PerformanceMonitor()
+    fun Monitor()
     {
         _buildScene();
     }
@@ -44,14 +45,14 @@ public class PerformanceMonitor
         titleText.align(0);
         titleText.color(@(1, 1, 1));
         titleText.pos(@(0, 0, 0));
-        "—" => titleText.text;
+        "-" => titleText.text;
 
         descText.font("chugl:proggy-clean");
         descText.size(.22);
         descText.align(0);
         descText.color(@(.72, .72, .8));
         descText.pos(@(0, -.5, 0));
-        "MIDI 100=1A | 36=5 | 29–35=movements | 28=toggle" => descText.text;
+        "MIDI 100=1A | 36=5 | 29-35=movements | 28=toggle" => descText.text;
     }
 
     fun void _statusListen()
@@ -91,28 +92,11 @@ public class PerformanceMonitor
         }
     }
 
-    fun void _sceneAnnounceListen()
-    {
-        OscIn sceneIn;
-        OscMsg msg;
-        9111 => sceneIn.port;
-        sceneIn.addAddress("/ds9/scene/announce");
-        while(true)
-        {
-            sceneIn => now;
-            while(sceneIn.recv(msg))
-            {
-                setMovement(msg.getString(0), msg.getString(1));
-            }
-        }
-    }
-
-    fun void run(int listenSceneAnnounce)
+    fun void run()
     {
         spork ~ _statusListen();
         spork ~ _pulseListen();
-        if(listenSceneAnnounce) spork ~ _sceneAnnounceListen();
-        <<< "performanceMonitor — ChuGL active" >>>;
+        <<< "monitor - ChuGL active" >>>;
         while(true)
         {
             GG.nextFrame() => now;

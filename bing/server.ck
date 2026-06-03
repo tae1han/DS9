@@ -4,7 +4,7 @@
 @import "instruments/slorkPianoMonitorInst.ck"
 @import {"lib/bufferState.ck"}
 @import {"score/performanceScore.ck"}
-@import {"graphics/performanceMonitor.ck"}
+@import {"graphics/monitor.ck"}
 
 "USB Midi Cable" => string MIDI_DEVICE;
 true => int MONITOR_USER_INPUT;
@@ -201,11 +201,11 @@ _initMonitor();
 
 Conductor conductor(controlOut, MULTICAST_ADDR, NumSlots.count());
 
-PerformanceMonitor @ monitor;
+Monitor @ monitor;
 if(!SOLO_MONITOR)
 {
-    new PerformanceMonitor() @=> monitor;
-    spork ~ monitor.run(0);
+    new Monitor() @=> monitor;
+    spork ~ monitor.run();
 }
 
 PerformanceScore score(conductor, NumSlots.count(), monitor);
