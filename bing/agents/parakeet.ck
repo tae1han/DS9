@@ -1,6 +1,6 @@
 @import "smuck"
-@import "../agent.ck"
-@import "../SMIR.ck"
+@import "../lib/agent.ck"
+@import "../lib/SMIR.ck"
 
 // Parakeet: harmonize incoming notes in real-time
 

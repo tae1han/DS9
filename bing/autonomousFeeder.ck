@@ -1,5 +1,3 @@
-@import "conductor.ck"
-
 8 => int NUM_SLOTS;
 "224.0.0.1" => string MULTICAST_ADDR;
 

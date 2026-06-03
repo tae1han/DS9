@@ -1,5 +1,5 @@
 @import "smuck"
-@import "../agent.ck"
+@import "../lib/agent.ck"
 
 @import "../instruments/albatrossSynthInst.ck"
 

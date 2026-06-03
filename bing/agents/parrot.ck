@@ -1,6 +1,6 @@
 @import "smuck"
-@import "../agent.ck"
-@import "../SMIR.ck"
+@import "../lib/agent.ck"
+@import "../lib/SMIR.ck"
 
 // Parrot: mimicks user phrase exactly
 public class Parrot extends Agent

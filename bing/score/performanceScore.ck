@@ -1,11 +1,11 @@
-@import "conductor.ck"
-@import "rolePresets.ck"
+@import "../conductor.ck"
+@import "roleConfig.ck"
 
 // Performance score — mirrors score/composition.txt. Single server-owned scene engine.
 public class PerformanceScore
 {
     Conductor @ _c;
-    RolePresets _presets;
+    RoleConfig _roles;
     int _n;
     int _gen;
     int _toggleArmed;   // 0 none, 1 = 2C, 2 = 3B
@@ -58,7 +58,7 @@ public class PerformanceScore
     {
         if(slot < 0 || slot >= _n) return;
         _c.sendRole(slot, role);
-        _presets.sendBaseline(_c, slot, role);
+        _roles.sendBaseline(_c, slot, role);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -158,7 +158,7 @@ public class PerformanceScore
     fun void _emuGlide(int slot, float gain, int listen)
     {
         _c.sendRole(slot, RoleIds.emu());
-        _presets.sendBaseline(_c, slot, RoleIds.emu());
+        _roles.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 1);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
@@ -170,7 +170,7 @@ public class PerformanceScore
     fun void _emuBass(int slot, float gain, int listen)
     {
         _c.sendRole(slot, RoleIds.emu());
-        _presets.sendBaseline(_c, slot, RoleIds.emu());
+        _roles.sendBaseline(_c, slot, RoleIds.emu());
         _c.sendParam(slot, "glideMode", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
@@ -183,7 +183,7 @@ public class PerformanceScore
         float sMin, float sMax, float jitter, int lo, int hi)
     {
         _c.sendRole(slot, RoleIds.falcon());
-        _presets.sendBaseline(_c, slot, RoleIds.falcon());
+        _roles.sendBaseline(_c, slot, RoleIds.falcon());
         _c.sendParam(slot, "numNotesMin", nMin);
         _c.sendParam(slot, "numNotesMax", nMax);
         _c.sendParam(slot, "stepMsMin", sMin);
@@ -230,7 +230,7 @@ public class PerformanceScore
             if(gen != _gen) return;
             s => int role;
             _c.sendRole(s, role);
-            _presets.sendChaosMax(_c, s, role, _presets.chaosGain(s));
+            _roles.sendChaosMax(_c, s, role, _roles.chaosStaggerGain(s));
             _c.sendListenTarget(s, -1);
             _c.sendActivate(s, 0);
             80::ms => now;
@@ -503,7 +503,7 @@ public class PerformanceScore
         {
             s => int role;
             _c.sendRole(s, role);
-            _presets.sendChaosMax(_c, s, role, _presets.chaosGain(s));
+            _roles.sendChaosMax(_c, s, role, _roles.chaosStaggerGain(s));
             _c.sendListenTarget(s, -1);
             _c.sendActivate(s, 0);
             40::ms => now;
@@ -539,7 +539,7 @@ public class PerformanceScore
 
     fun void applyMovement(int pitch)
     {
-        if(pitch == 36)
+        if(pitch == MidiCtl.chaos())
         {
             if(_chaosReturnArmed) apply5();
             else apply1A();

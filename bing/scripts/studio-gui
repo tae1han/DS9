@@ -22,4 +22,4 @@ fi
 
 cd "$PROJECT_DIR"
 echo "DS10 performance display — attach to running local stack"
-exec chuck "performanceDisplay.ck:local"
+exec chuck "graphics/performanceDisplay.ck:local"

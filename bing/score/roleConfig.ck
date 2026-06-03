@@ -1,9 +1,40 @@
-@import "agent.ck"
-@import "conductor.ck"
+@import "../lib/agent.ck"
+@import "../conductor.ck"
 
-// Pre-chaos established values — keep in sync with agents/defaults.txt
-public class RoleBaselines
+// Role gains, baseline params, and chaos presets — keep in sync with agents/defaults.txt.
+public class RoleConfig
 {
+    // --- Client instrument gain (sf2Util internal 2.5× load) ---
+
+    fun float performanceGain(int role)
+    {
+        if(role == 0) return 1.28;
+        if(role == 1) return 1.4;
+        if(role == 2) return 1.4;
+        if(role == 3) return 1.5;
+        if(role == 4) return 1.3;
+        if(role == 5) return 2.1;
+        if(role == 6) return 2.2;
+        if(role == 7) return 0.8;
+        return 1.0;
+    }
+
+    // Movement 1A / 5 stagger gains (composition.txt).
+    fun float chaosStaggerGain(int slot)
+    {
+        if(slot == 0) return 1.3;
+        if(slot == 1) return 1.4;
+        if(slot == 2) return 0.95;
+        if(slot == 3) return 1.2;
+        if(slot == 4) return 1.1;
+        if(slot == 5) return 2.0;
+        if(slot == 6) return 1.3;
+        if(slot == 7) return 0.8;
+        return 1.0;
+    }
+
+    // --- Client: reset agent to pre-chaos defaults ---
+
     fun void applyAgent(Agent @ a, int role)
     {
         if(a == null) return;
@@ -106,14 +137,9 @@ public class RoleBaselines
         }
     }
 
-    fun void sendToSlot(Conductor @ c, int slot, int role)
-    {
-        if(c == null) return;
-        c.sendRole(slot, role);
-        sendParams(c, slot, role);
-    }
+    // --- Server: OSC baseline reset before movement-specific params ---
 
-    fun void sendParams(Conductor @ c, int slot, int role)
+    fun void sendBaseline(Conductor @ c, int slot, int role)
     {
         if(c == null) return;
         c.sendParam(slot, "eddiesEnabled", 0);
@@ -212,5 +238,90 @@ public class RoleBaselines
             c.sendParam(slot, "postSeedQuietMin", 2.0);
             c.sendParam(slot, "postSeedQuietMax", 4.0);
         }
+    }
+
+    // --- Server: max-chaos preset (movements 1A, 4A, 5) ---
+
+    fun void sendChaosMax(Conductor @ c, int slot, int role, float gain)
+    {
+        if(c == null) return;
+        c.sendParam(slot, "delayMin", 0.0);
+        c.sendParam(slot, "delayMax", 0.0);
+
+        if(role == RoleIds.parrot())
+        {
+            c.sendParam(slot, "mode", 1);
+            c.sendParam(slot, "developTechnique", -1);
+            c.sendParam(slot, "probability", 1.0);
+            c.sendParam(slot, "delayMax", 0.05);
+        }
+        else if(role == RoleIds.parakeet())
+        {
+            c.sendParam(slot, "rtMode", 1);
+            c.sendParam(slot, "polyphony", 2);
+            c.sendParam(slot, "intervalMin", 3);
+            c.sendParam(slot, "intervalMax", 9);
+            c.sendParam(slot, "probability", 0.65);
+            c.sendParam(slot, "windowDurMin", 0.5);
+            c.sendParam(slot, "windowDurMax", 2.0);
+            c.sendParam(slot, "silenceMin", 0.3);
+            c.sendParam(slot, "silenceMax", 1.5);
+        }
+        else if(role == RoleIds.albatross())
+        {
+            c.sendParam(slot, "minNotes", 2);
+            c.sendParam(slot, "minPitchClasses", 2);
+            c.sendParam(slot, "trillProb", 0.65);
+            c.sendParam(slot, "trillRateMinHz", 2.0);
+            c.sendParam(slot, "trillRateMaxHz", 22.0);
+            c.sendParam(slot, "trillRampProb", 0.75);
+            c.sendParam(slot, "holdSecondsMin", 1.0);
+            c.sendParam(slot, "holdSecondsMax", 2.5);
+            c.sendParam(slot, "maxVoices", 3);
+            c.sendParam(slot, "velMax", 0.45);
+        }
+        else if(role == RoleIds.peacock())
+        {
+            c.sendParam(slot, "timingScale", 0.8);
+            c.sendParam(slot, "probability", 1.0);
+        }
+        else if(role == RoleIds.emu())
+            c.sendParam(slot, "glideMode", 1);
+        else if(role == RoleIds.falcon())
+        {
+            c.sendParam(slot, "numNotesMin", 12);
+            c.sendParam(slot, "numNotesMax", 24);
+            c.sendParam(slot, "stepMsMin", 25.0);
+            c.sendParam(slot, "stepMsMax", 90.0);
+            c.sendParam(slot, "stepJitterMs", 12.0);
+            c.sendParam(slot, "noteDurMs", 280.0);
+            c.sendParam(slot, "probability", 0.9);
+        }
+        else if(role == RoleIds.swan())
+        {
+            c.sendParam(slot, "repeatSpeed", 0.35);
+            c.sendParam(slot, "repeatGapBeats", 0.25);
+            c.sendParam(slot, "timingScale", 0.25);
+            c.sendParam(slot, "repeatExtraMin", 0);
+            c.sendParam(slot, "repeatExtraMax", 2);
+            c.sendParam(slot, "probability", 0.55);
+        }
+        else if(role == RoleIds.owl())
+        {
+            c.sendParam(slot, "owlMode", 0);
+            c.sendParam(slot, "quantizeRecall", 0);
+            c.sendParam(slot, "seedCooldownMs", 400);
+            c.sendParam(slot, "eddiesEnabled", 0);
+            c.sendParam(slot, "phraseOnlyEddies", 1);
+            c.sendParam(slot, "seedProb", 0);
+        }
+
+        if(role != RoleIds.owl())
+        {
+            c.sendParam(slot, "eddiesEnabled", 1);
+            c.sendParam(slot, "phraseOnlyEddies", 0);
+        }
+
+        c.sendParam(slot, "roleGain", gain);
     }
 }

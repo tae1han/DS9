@@ -11,5 +11,5 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 pkill -f "chuck.*$PROJECT_DIR/server.ck" 2>/dev/null || true
 pkill -f "chuck.*$PROJECT_DIR/client.ck" 2>/dev/null || true
 pkill -f "chuck.*$PROJECT_DIR/autonomousFeeder.ck" 2>/dev/null || true
-pkill -f "chuck.*$PROJECT_DIR/performanceDisplay.ck" 2>/dev/null || true
+pkill -f "chuck.*$PROJECT_DIR/graphics/performanceDisplay.ck" 2>/dev/null || true
 echo "Stopped local chuck processes under $PROJECT_DIR"

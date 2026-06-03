@@ -1,6 +1,9 @@
 @import "smuck"
 
 // Shared bing constants (OSC paths use /ds9/ prefix).
+// Module globals below are for documentation only — use static accessor classes
+// (RoleIds, OwlSlots, NumSlots, MidiCtl, ReservedMidi) from classes and functions
+// in imported files; ChucK cannot read module globals across import boundaries.
 8 => int NUM_AGENT_SLOTS;
 0 => int ROLE_PARROT;
 1 => int ROLE_PARAKEET;
@@ -53,14 +56,26 @@ public class OwlSlots
     fun static int a() { return 7; }
 }
 
+public class NumSlots
+{
+    fun static int count() { return 8; }
+}
+
+public class MidiCtl
+{
+    fun static int toggle() { return 28; }
+    fun static int movementFirst() { return 29; }
+    fun static int movementLast() { return 35; }
+    fun static int chaos() { return 36; }
+}
+
 public class ReservedMidi
 {
-    // Literals only — static methods cannot read module globals (MIDI_* below).
     fun static int isControl(int pitch)
     {
-        if(pitch == 28) return 1;
-        if(pitch >= 29 && pitch <= 35) return 1;
-        if(pitch == 36) return 1;
+        if(pitch == MidiCtl.toggle()) return 1;
+        if(pitch >= MidiCtl.movementFirst() && pitch <= MidiCtl.movementLast()) return 1;
+        if(pitch == MidiCtl.chaos()) return 1;
         return 0;
     }
 }

@@ -1,7 +1,7 @@
 @import "smuck"
-@import "../agent.ck"
-@import "../phraseMemory.ck"
-@import "../SMIR.ck"
+@import "../lib/agent.ck"
+@import "../lib/phraseMemory.ck"
+@import "../lib/SMIR.ck"
 
 public class Owl extends Agent
 {

@@ -1,6 +1,6 @@
 @import "smuck"
 @import "SMIR.ck"
-@import "conductor.ck"
+@import "../conductor.ck"
 
 public class bufferState
 {

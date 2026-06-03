@@ -1,6 +1,6 @@
 // Read-only performance monitor: movement title + slot pulse grid + role labels.
-@import "conductor.ck"
-@import "graphics/pulseGrid.ck"
+@import "../conductor.ck"
+@import "pulseGrid.ck"
 
 "224.0.0.1" => string MULTICAST_ADDR;
 8889 => int STATUS_PORT;

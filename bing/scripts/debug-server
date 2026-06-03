@@ -40,7 +40,7 @@ echo "Stopping all Chuck in $PROJECT_DIR..."
 pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
 sleep 1
 
-for f in server.ck performanceDisplay.ck autonomousFeeder.ck; do
+for f in server.ck graphics/performanceDisplay.ck autonomousFeeder.ck; do
   [[ -f "$PROJECT_DIR/$f" ]] || { echo "missing $f" >&2; exit 1; }
 done
 
@@ -57,7 +57,7 @@ echo ""
 chuck "$PROJECT_DIR/autonomousFeeder.ck" >/dev/null 2>&1 &
 FEEDER_PID=$!
 
-chuck "$PROJECT_DIR/performanceDisplay.ck:local" >/dev/null 2>&1 &
+chuck "$PROJECT_DIR/graphics/performanceDisplay.ck:local" >/dev/null 2>&1 &
 DISPLAY_PID=$!
 
 sleep 1

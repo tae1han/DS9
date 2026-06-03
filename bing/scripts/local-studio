@@ -5,7 +5,7 @@
 #   ./scripts/local-studio
 #   ./scripts/local-studio "USB Midi Cable"
 #
-# Opens performanceDisplay.ck (pulse grid + movement title). Movements via MIDI on server.
+# Opens graphics/performanceDisplay.ck (pulse grid + movement title). Movements via MIDI on server.
 # Logs: .local-logs/{client-*,feeder,display,server}.log
 # Stop: Ctrl+C in server terminal, or ./scripts/local-stop
 
@@ -36,7 +36,7 @@ if ! command -v chuck >/dev/null 2>&1; then
   exit 1
 fi
 
-if pgrep -f "chuck.*$PROJECT_DIR/(server|client|autonomousFeeder|performanceDisplay)\\.ck" >/dev/null 2>&1; then
+if pgrep -f "chuck.*$PROJECT_DIR/(server|client|autonomousFeeder|graphics/performanceDisplay)\\.ck" >/dev/null 2>&1; then
   echo "Stopping existing studio processes..."
   "$SCRIPT_DIR/local-stop"
   sleep 1
@@ -106,7 +106,7 @@ chuck "autonomousFeeder.ck:local" >"$LOG_DIR/feeder.log" 2>&1 &
 BG_PIDS+=("$!")
 echo "  feeder           pid $!"
 
-chuck "performanceDisplay.ck:local" >"$LOG_DIR/display.log" 2>&1 &
+chuck "graphics/performanceDisplay.ck:local" >"$LOG_DIR/display.log" 2>&1 &
 BG_PIDS+=("$!")
 echo "  display          pid $!"
 

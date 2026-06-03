@@ -1,18 +1,13 @@
 @import "conductor.ck"
-@import "SMIR.ck"
+@import "lib/SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
-@import {"bufferState.ck", "oscBufferState.ck", "agent.ck", "phraseMemory.ck"}
+@import {"lib/bufferState.ck", "lib/oscBufferState.ck", "lib/agent.ck", "lib/phraseMemory.ck"}
 @import {"instruments/sf2Util.ck", "instruments/roleTimbres.ck"}
 @import {"instruments/albatrossSynthInst.ck", "instruments/glideBassInst.ck", "instruments/arpInst.ck"}
 @import {"agents/parrot.ck", "agents/parakeet.ck", "agents/albatross.ck", "agents/peacock.ck"}
 @import {"agents/emu.ck", "agents/falcon.ck", "agents/swan.ck", "agents/owl.ck"}
-@import "roleBaselines.ck"
-@import "roleGains.ck"
+@import "score/roleConfig.ck"
 @import {"graphics/clientFlash.ck"}
-
-8 => int NUM_AGENT_SLOTS;
-4 => int ROLE_EMU;
-7 => int ROLE_OWL;
 
 9000 => int OSC_LISTEN_PORT_BASE;
 8889 => int SERVER_STATUS_PORT;
@@ -26,7 +21,7 @@
 
 if(me.args() < 1) { <<< "usage: chuck client.ck:<0-7>[:local][:headless][:sim][:flash][:pkmn]" >>>; me.exit(); }
 Std.atoi(me.arg(0)) => int myIndex;
-if(myIndex < 0 || myIndex >= NUM_AGENT_SLOTS) me.exit();
+if(myIndex < 0 || myIndex >= NumSlots.count()) me.exit();
 
 0 => int HEADLESS;
 0 => int SIM_MIX;
@@ -77,7 +72,7 @@ PhraseMemory phraseMem;
 myIndex => int pendingRole;
 -2 => int pendingTimbre;
 
-RoleGains roleGains;
+RoleConfig roleConfig;
 
 fun void _applyInstGain(int role, float g)
 {
@@ -87,7 +82,7 @@ fun void _applyInstGain(int role, float g)
 
 fun float _roleGain(int role)
 {
-    return roleGains.performance(role);
+    return roleConfig.performanceGain(role);
 }
 
 fun int _isOwlParam(string p)
@@ -101,7 +96,6 @@ fun int _isOwlParam(string p)
 parrot @=> agents[0]; parakeet @=> agents[1]; albatross @=> agents[2];
 peacock @=> agents[3]; emu @=> agents[4]; falcon @=> agents[5];
 swan @=> agents[6]; owl @=> agents[7];
-RoleBaselines roleBaselines;
 instAlba @=> insts[2];
 instGlide @=> insts[4];
 
@@ -138,7 +132,7 @@ for(0 => int r; r < 8; r++)
     agents[r].masterRef(master);
     agents[r].run();
     agents[r].disable();
-    agents[r].bindAgentBus(agentOut, myIndex, MULTICAST_ADDR, AGENT_BUS_PORT_BASE, NUM_AGENT_SLOTS);
+    agents[r].bindAgentBus(agentOut, myIndex, MULTICAST_ADDR, AGENT_BUS_PORT_BASE, NumSlots.count());
     agents[r].bindPulseOut(pulseOut);
 }
 
@@ -475,13 +469,13 @@ fun void _control()
                     if(r >= 0) _pickTimbre(r, pendingTimbre);
                     -2 => pendingTimbre;
                 }
-                else if(p == "glideMode" && (activeRole == ROLE_EMU || pendingRole == ROLE_EMU))
+                else if(p == "glideMode" && (activeRole == RoleIds.emu() || pendingRole == RoleIds.emu()))
                 {
-                    agents[ROLE_EMU].setParam(p, v);
-                    if(v > 0) instGlide @=> insts[ROLE_EMU];
-                    else _pickTimbre(ROLE_EMU, -1);
-                    if(activeRole == ROLE_EMU || pendingRole == ROLE_EMU)
-                        insts[ROLE_EMU] @=> agents[ROLE_EMU].inst;
+                    agents[RoleIds.emu()].setParam(p, v);
+                    if(v > 0) instGlide @=> insts[RoleIds.emu()];
+                    else _pickTimbre(RoleIds.emu(), -1);
+                    if(activeRole == RoleIds.emu() || pendingRole == RoleIds.emu())
+                        insts[RoleIds.emu()] @=> agents[RoleIds.emu()].inst;
                 }
                 else if(p == "panic")
                 {
@@ -490,7 +484,7 @@ fun void _control()
                 else if(p == "roleGain")
                 {
                     int r;
-                    if(pendingRole == ROLE_OWL) ROLE_OWL => r;
+                    if(pendingRole == RoleIds.owl()) RoleIds.owl() => r;
                     else if(activeRole >= 0) activeRole => r;
                     else if(pendingRole >= 0) pendingRole => r;
                     else myIndex => r;
@@ -502,13 +496,13 @@ fun void _control()
                     if(activeRole >= 0) activeRole => r;
                     else if(pendingRole >= 0) pendingRole => r;
                     else myIndex => r;
-                    roleBaselines.applyAgent(agents[r], r);
-                    _applyInstGain(r, roleGains.performance(r));
+                    roleConfig.applyAgent(agents[r], r);
+                    _applyInstGain(r, roleConfig.performanceGain(r));
                 }
                 else if(_isOwlParam(p))
-                    agents[ROLE_OWL].setParam(p, v);
+                    agents[RoleIds.owl()].setParam(p, v);
                 else if(p == "clearPitchSet")
-                    agents[ROLE_PARAKEET].setParam(p, v);
+                    agents[RoleIds.parakeet()].setParam(p, v);
                 else if(activeRole >= 0) agents[activeRole].setParam(p, v);
                 else if(pendingRole >= 0) agents[pendingRole].setParam(p, v);
             }

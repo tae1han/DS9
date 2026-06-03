@@ -1,9 +1,9 @@
 @import "conductor.ck"
-@import "SMIR.ck"
+@import "lib/SMIR.ck"
 @import {"smuck", "smuck/ezFluidInst.ck"}
 @import "instruments/slorkPianoMonitorInst.ck"
-@import {"bufferState.ck"}
-@import {"performanceScore.ck"}
+@import {"lib/bufferState.ck"}
+@import {"score/performanceScore.ck"}
 
 "USB Midi Cable" => string MIDI_DEVICE;
 true => int MONITOR_USER_INPUT;
@@ -55,7 +55,7 @@ fun int _isControlMidi(int pitch)
 fun void _oscForwardNoteOn(int pitch, float vel)
 {
     if(_ensembleMuted || _isControlMidi(pitch)) return;
-    for(int slot; slot < NUM_AGENT_SLOTS; slot++)
+    for(int slot; slot < NumSlots.count(); slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
         xmit.start("/ds9/noteOn");
@@ -68,7 +68,7 @@ fun void _oscForwardNoteOn(int pitch, float vel)
 fun void _oscForwardNoteOff(int pitch)
 {
     if(_ensembleMuted || _isControlMidi(pitch)) return;
-    for(int slot; slot < NUM_AGENT_SLOTS; slot++)
+    for(int slot; slot < NumSlots.count(); slot++)
     {
         xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
         xmit.start("/ds9/noteOff");
@@ -83,7 +83,7 @@ fun void _forwardPhraseStart()
     {
         bs.phraseStartEvent => now;
         if(_ensembleMuted) continue;
-        for(int slot; slot < NUM_AGENT_SLOTS; slot++)
+        for(int slot; slot < NumSlots.count(); slot++)
         {
             xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
             xmit.start("/ds9/phraseStart");
@@ -98,7 +98,7 @@ fun void _forwardPhraseComplete()
     {
         bs.phraseCompleteEvent => now;
         if(_ensembleMuted) continue;
-        for(int slot; slot < NUM_AGENT_SLOTS; slot++)
+        for(int slot; slot < NumSlots.count(); slot++)
         {
             xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
             xmit.start("/ds9/phraseComplete");
@@ -113,7 +113,7 @@ fun void _forwardSilence()
     {
         bs.silenceSustainedEvent => now;
         if(_ensembleMuted) continue;
-        for(int slot; slot < NUM_AGENT_SLOTS; slot++)
+        for(int slot; slot < NumSlots.count(); slot++)
         {
             xmit.dest(MULTICAST_ADDR, CLIENT_OSC_PORT + slot);
             xmit.start("/ds9/silenceSustained");
@@ -198,8 +198,8 @@ fun void _monitorMidi(int on, int pitch, float vel)
 
 _initMonitor();
 
-Conductor conductor(controlOut, MULTICAST_ADDR, NUM_AGENT_SLOTS);
-PerformanceScore score(conductor, NUM_AGENT_SLOTS);
+Conductor conductor(controlOut, MULTICAST_ADDR, NumSlots.count());
+PerformanceScore score(conductor, NumSlots.count());
 
 fun void _resumeClientMidi()
 {
@@ -232,9 +232,9 @@ fun void _controlMidiLoop()
 
         if(!on) continue;
 
-        if(pitch == MIDI_TOGGLE)
+        if(pitch == MidiCtl.toggle())
             score.toggleListenChain();
-        else if(pitch == MIDI_CHAOS || (pitch >= MIDI_MOVEMENT_FIRST && pitch <= MIDI_MOVEMENT_LAST))
+        else if(pitch == MidiCtl.chaos() || (pitch >= MidiCtl.movementFirst() && pitch <= MidiCtl.movementLast()))
         {
             _resumeClientMidi();
             score.applyMovement(pitch);
@@ -341,7 +341,7 @@ if(!SOLO_MONITOR)
     spork ~ _serverLinkHeartbeat();
     spork ~ _serverLinkListen();
     if(!SIM_MONITOR)
-        for(int i; i < NUM_AGENT_SLOTS; i++)
+        for(int i; i < NumSlots.count(); i++)
             conductor.sendActivate(i, 0);
 }
 

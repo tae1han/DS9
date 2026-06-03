@@ -1,5 +1,5 @@
 @import "smuck"
-@import "../agent.ck"
+@import "../lib/agent.ck"
 
 // Falcon: does scale runs based on the current pitch set extracted from the rolling buffer
 
