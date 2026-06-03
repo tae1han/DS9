@@ -1,45 +1,5 @@
 #!/bin/bash
-# Networked client for debug-server on another machine (OSC 224.0.0.1).
-#
-# Usage:
-#   ./scripts/debug-client <slot 0-7>
-#   ./scripts/debug-client <slot> local   # same-machine as server only
-
-set -euo pipefail
-
+cd "$(dirname "$0")/.."
 networksetup -setairportpower en0 off 2>/dev/null || true
-
-if [[ $# -lt 1 ]]; then
-  echo "usage: $0 <slot 0-7> [local]" >&2
-  exit 1
-fi
-
-SLOT="$1"
-if [[ ! "$SLOT" =~ ^[0-7]$ ]]; then
-  echo "slot must be 0-7" >&2
-  exit 1
-fi
-
-LOCAL_ARG=""
-if [[ "${2:-}" == "local" ]]; then
-  LOCAL_ARG=":local"
-fi
-
-SOURCE="${BASH_SOURCE[0]}"
-while [ -L "$SOURCE" ]; do
-  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-cleanup() {
-  networksetup -setairportpower en0 on 2>/dev/null || true
-}
-trap cleanup EXIT INT TERM
-
-command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
-cd "$PROJECT_DIR"
-
-chuck -c8 "client.ck:${SLOT}${LOCAL_ARG}:pkmn:flash" --bufsize:1024
+trap 'networksetup -setairportpower en0 on 2>/dev/null || true' EXIT
+exec chuck -c8 "client.ck:$1:pkmn:flash" --bufsize:1024

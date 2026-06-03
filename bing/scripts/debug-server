@@ -1,71 +1,8 @@
 #!/bin/bash
-# Networked concert debug: server (foreground) + feeder. ChuGL monitor in server.ck.
-# Clients on other machines: ./scripts/debug-client <slot>
-#
-# Usage:
-#   ./scripts/debug-server
-#   ./scripts/debug-server "USB Midi Cable"
-#   ./scripts/debug-server local              # same-machine only (127.0.0.1)
-
-set -euo pipefail
-
+cd "$(dirname "$0")/.."
 networksetup -setairportpower en0 off 2>/dev/null || true
-
-SOURCE="${BASH_SOURCE[0]}"
-while [ -L "$SOURCE" ]; do
-  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOG_DIR="$PROJECT_DIR/.local-logs"
-mkdir -p "$LOG_DIR"
-
+trap 'networksetup -setairportpower en0 on 2>/dev/null || true' EXIT
 MIDI_DEV="USB Midi Cable"
-LOCAL_ARGS=""
-for arg in "$@"; do
-  if [[ "$arg" == "local" ]]; then
-    LOCAL_ARGS="local:"
-  elif [[ "$arg" != [0-9]* ]]; then
-    MIDI_DEV="$arg"
-  fi
-done
-
-SERVER_ARGS="${LOCAL_ARGS}${MIDI_DEV}:sim:pad:midiLog"
-FEEDER_ARGS=""
-[[ -n "$LOCAL_ARGS" ]] && FEEDER_ARGS=":local"
-
-cleanup() {
-  pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
-  networksetup -setairportpower en0 on 2>/dev/null || true
-}
-trap cleanup EXIT INT TERM
-
-command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
-cd "$PROJECT_DIR"
-
-echo "Stopping all Chuck in $PROJECT_DIR..."
-pkill -f "chuck.*$PROJECT_DIR/" 2>/dev/null || true
-sleep 1
-
-for f in server.ck graphics/monitor.ck autonomousFeeder.ck; do
-  [[ -f "$PROJECT_DIR/$f" ]] || { echo "missing $f" >&2; exit 1; }
-done
-
-echo ""
-echo "debug-server (OSC multicast 224.0.0.1 unless 'local' arg)"
-echo "  dir:  $PROJECT_DIR"
-echo "  MIDI: $MIDI_DEV"
-echo "  log:  $LOG_DIR/server.log"
-echo ""
-echo "MIDI 100=1A | 36=5 | 29-35=movements | 28=toggle (2C/3B) | other keys=piano"
-echo "Ctrl+C stops everything"
-echo ""
-
-chuck "$PROJECT_DIR/autonomousFeeder.ck${FEEDER_ARGS}" >/dev/null 2>&1 &
-FEEDER_PID=$!
-
-# ChuGL monitor runs inside server.ck (no separate display process)
-
-exec chuck "$PROJECT_DIR/server.ck:${SERVER_ARGS}" 2>&1 | tee "$LOG_DIR/server.log"
+for arg in "$@"; do [[ "$arg" != [0-9]* ]] && MIDI_DEV="$arg"; done
+chuck autonomousFeeder.ck >/dev/null 2>&1 &
+exec chuck "server.ck:${MIDI_DEV}:sim:pad"

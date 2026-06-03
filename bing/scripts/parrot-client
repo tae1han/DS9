@@ -1,34 +1,3 @@
 #!/bin/bash
-set -euo pipefail
-
-SLORK_BING="/Users/slork/slork/users/tae1han/bing"
-
-if [[ $# -lt 1 ]]; then
-  echo "usage: $0 <slot 0-7>" >&2
-  exit 1
-fi
-
-SLOT="$1"
-if [[ ! "$SLOT" =~ ^[0-7]$ ]]; then
-  echo "slot must be 0-7" >&2
-  exit 1
-fi
-
-SOURCE="${BASH_SOURCE[0]}"
-while [ -L "$SOURCE" ]; do
-  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-
-if [[ -d "$SLORK_BING" ]]; then
-  PROJECT_DIR="$SLORK_BING"
-else
-  PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-fi
-
-command -v chuck >/dev/null || { echo "chuck not found" >&2; exit 1; }
-cd "$PROJECT_DIR"
-
-exec chuck -c8 "client.ck:${SLOT}:pkmn:flash" --bufsize:1024
+cd /Users/slork/slork/users/tae1han/ds9-bing
+exec chuck -c8 "client.ck:$1:pkmn:flash" --bufsize:1024

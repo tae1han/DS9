@@ -188,9 +188,6 @@ public class bufferState
             min => now;
             while (min.recv(msg))
             {
-                if(_rawMidiLog)
-                    <<< "RAW", msg.data1, msg.data2, msg.data3 >>>;
-
                 (now - recStart) / ms => float phrase_elapsed_ms;
                 (now - absStart) / ms => float abs_elapsed_ms;
 
