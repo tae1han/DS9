@@ -149,7 +149,7 @@ fun void _initMonitor()
     f.close();
     new SlorkPianoMonitorInst(MONITOR_SF2, 0) @=> monitorInst;
     monitorInst.numVoices(128);
-    if(SIM_MONITOR) monitorInst.gain(5.0);
+    if(SIM_MONITOR) monitorInst.gain(8.0);
     else monitorInst.gain(10);
     monitorInst => master;
     for(0 => int p; p < 128; p++) -1 => _monVoice[p];

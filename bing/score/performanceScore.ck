@@ -105,6 +105,8 @@ public class PerformanceScore
         _c.sendRole(slot, RoleIds.parrot());
         _c.sendParam(slot, "mode", 0);
         _c.sendParam(slot, "probability", 1.0);
+        _c.sendParam(slot, "delayMin", 0.25);
+        _c.sendParam(slot, "delayMax", 1.5);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -118,6 +120,34 @@ public class PerformanceScore
         _c.sendParam(slot, "mode", 1);
         _c.sendParam(slot, "developTechnique", -1);
         _c.sendParam(slot, "probability", 1.0);
+        _c.sendParam(slot, "delayMin", 0.25);
+        _c.sendParam(slot, "delayMax", 1.5);
+        _c.sendParam(slot, "roleGain", gain);
+        _c.sendListenTarget(slot, listen);
+        _c.sendActivate(slot, 0);
+        80::ms => now;
+        _c.sendActivate(slot, 1);
+    }
+
+    fun void _swan(int slot, float gain, int listen)
+    {
+        _c.sendRole(slot, RoleIds.swan());
+        _roles.sendBaseline(_c, slot, RoleIds.swan());
+        _c.sendParam(slot, "probability", 1.0);
+        _c.sendParam(slot, "phraseOnlyEddies", 0);
+        _c.sendParam(slot, "roleGain", gain);
+        _c.sendListenTarget(slot, listen);
+        _c.sendActivate(slot, 0);
+        80::ms => now;
+        _c.sendActivate(slot, 1);
+    }
+
+    fun void _peacock(int slot, float gain, int listen)
+    {
+        _c.sendRole(slot, RoleIds.peacock());
+        _roles.sendBaseline(_c, slot, RoleIds.peacock());
+        _c.sendParam(slot, "probability", 1.0);
+        _c.sendParam(slot, "phraseOnlyEddies", 0);
         _c.sendParam(slot, "roleGain", gain);
         _c.sendListenTarget(slot, listen);
         _c.sendActivate(slot, 0);
@@ -316,18 +346,18 @@ public class PerformanceScore
         _parrotEcho(4, 1.2, OwlSlots.a());
         5::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(1, 2.0, OwlSlots.b());
+        _swan(1, 1.3, OwlSlots.b());
         _parrotDevelop(0, 1.2, OwlSlots.b());
         2::second => now;
         if(gen != _gen) return;
-        _parakeetMirror(3, 2.0, OwlSlots.a());
+        _peacock(3, 1.2, OwlSlots.a());
         _parrotDevelop(4, 1.2, OwlSlots.a());
     }
 
     fun void apply2B()
     {
         bumpGen() => int gen;
-        _announce("Movement 2B — Growing chain", "Parrots → Parakeets on Owls");
+        _announce("Movement 2B — Growing chain", "Parrots; Swan→5, Peacock→7");
         _c.sendFeederPause(1);
         _c.sendMidiForward(1);
         _parrotEcho(0, 1.2, OwlSlots.b());
@@ -444,26 +474,26 @@ public class PerformanceScore
         4::second => now;
         if(gen != _gen) return;
         _deactivateSlots(highGrp);
-        _falconGroup(lowGrp, 1.5, 3, 5, 40, 50, 5, 48, 60);
+        _falconGroup(lowGrp, 1.5, 5, 8, 40, 50, 5, 48, 60);
 
         4::second => now;
         if(gen != _gen) return;
         _deactivateSlots(lowGrp);
-        _falconGroup(highGrp, 1.5, 4, 10, 40, 70, 10, 72, 84);
+        _falconGroup(highGrp, 1.5, 6, 15, 40, 70, 10, 72, 84);
 
         4::second => now;
         if(gen != _gen) return;
         _deactivateSlots(highGrp);
-        _falconGroup(lowGrp, 1.5, 4, 10, 40, 70, 10, 48, 60);
+        _falconGroup(lowGrp, 1.5, 6, 15, 40, 70, 10, 48, 60);
 
         4::second => now;
         if(gen != _gen) return;
         int gA[3]; 0 => gA[0]; 1 => gA[1]; 5 => gA[2];
         int gB[2]; 2 => gB[0]; 6 => gB[1];
         int gC[3]; 3 => gC[0]; 4 => gC[1]; 7 => gC[2];
-        _falconGroup(gA, 1.5, 4, 8, 120, 180, 20, 48, 60);
-        _falconGroup(gB, 1.5, 8, 14, 75, 120, 10, 60, 72);
-        _falconGroup(gC, 1.5, 12, 24, 40, 50, 10, 72, 84);
+        _falconGroup(gA, 1.5, 6, 12, 120, 180, 20, 48, 60);
+        _falconGroup(gB, 1.5, 12, 21, 75, 120, 10, 60, 72);
+        _falconGroup(gC, 1.5, 18, 36, 40, 50, 10, 72, 84);
     }
 
     fun void apply3A()
@@ -474,7 +504,7 @@ public class PerformanceScore
         _c.sendMidiForward(1);
         for(int s; s < _n; s++) _slotOff(s);
         int highGrp[3]; 5 => highGrp[0]; 6 => highGrp[1]; 7 => highGrp[2];
-        _falconGroup(highGrp, 1.5, 3, 5, 40, 50, 5, 72, 84);
+        _falconGroup(highGrp, 1.5, 5, 8, 40, 50, 5, 72, 84);
         spork ~ _timeline3A(gen);
     }
 
