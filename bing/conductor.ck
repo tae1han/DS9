@@ -23,11 +23,12 @@
 
 public class ReservedMidi
 {
+    // Literals only — static methods cannot read module globals (MIDI_* below).
     fun static int isControl(int pitch)
     {
-        if(pitch == MIDI_TOGGLE) return 1;
-        if(pitch >= MIDI_MOVEMENT_FIRST && pitch <= MIDI_MOVEMENT_LAST) return 1;
-        if(pitch == MIDI_CHAOS) return 1;
+        if(pitch == 28) return 1;
+        if(pitch >= 29 && pitch <= 35) return 1;
+        if(pitch == 36) return 1;
         return 0;
     }
 }
